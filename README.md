@@ -36,35 +36,31 @@ Merma, opción en caso de que el produto no se haya podido vender y se hecha a p
 ver registros de ganacias, se mostrara los productos más vendidos, con las ganancias y los gastos realizados y los reportes de los meses con sus graficos representando los meses con mas ganancias y perdidas.
 
 # Entindad relación BD
-```mermeid
----
-title: Animal example
----
+```mermaid
 classDiagram
-    note "From Duck till Zebra"
-    Animal <|-- Duck
-    note for Duck "can fly<br>can swim<br>can dive<br>can help in debugging"
-    Animal <|-- Fish
-    Animal <|-- Zebra
-    Animal : +int age
-    Animal : +String gender
-    Animal: +isMammal()
-    Animal: +mate()
-    class Duck{
-        +String beakColor
-        +swim()
-        +quack()
-    }
-    class Fish{
-        -int sizeInFeet
-        -canEat()
-    }
-    class Zebra{
-        +bool is_wild
-        +run()
-    }
+  class Customer {
+    +String name
+    +String email
+  }
 
+  class Order {
+    +String id
+    +Date placedAt
+    +total() Money
+  }
 
+  class LineItem {
+    +int quantity
+  }
+
+  class Payment {
+    <<interface>>
+    +authorise() bool
+  }
+
+  Customer "1" --> "*" Order : places
+  Order "1" *-- "*" LineItem : contains
+  Order --> Payment : settled by
 ```
 
 
