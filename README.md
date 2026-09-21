@@ -36,7 +36,7 @@ Merma, opción en caso de que el produto no se haya podido vender y se hecha a p
 ver registros de ganacias, se mostrara los productos más vendidos, con las ganancias y los gastos realizados y los reportes de los meses con sus graficos representando los meses con mas ganancias y perdidas.
 
 # Entindad relación BD
-```
+```mermeid
 erDiagram
   CUSTOMER ||--o{ ORDER : places
   ORDER ||--|{ LINE_ITEM : contains
