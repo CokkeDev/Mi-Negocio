@@ -37,12 +37,27 @@ ver registros de ganacias, se mostrara los productos más vendidos, con las gana
 
 # Entindad relación BD
 
-```mermaid
 erDiagram
-    CLIENTE ||--o{ PEDIDO : realiza
-    PEDIDO ||--| { DETALLE_PEDIDO : incluye
-    PRODUCTO o{--| { DETALLE_PEDIDO : contiene
-```
+  CUSTOMER ||--o{ ORDER : places
+  ORDER ||--|{ LINE_ITEM : contains
+  PRODUCT ||--o{ LINE_ITEM : "appears in"
+  CUSTOMER {
+    string name
+    string email
+  }
+  ORDER {
+    int id
+    date placedAt
+  }
+  LINE_ITEM {
+    int quantity
+    float price
+  }
+  PRODUCT {
+    string sku
+    string title
+  }
+
 
 
 
