@@ -66,7 +66,7 @@ classDiagram
     +Int Total
   }
 
-    class Detalles de Venta{
+    class Detalles_Venta{
     +Int Id_detalle PK
     +Int Id_venta FK
     +Int Id_lote FK
@@ -76,8 +76,8 @@ classDiagram
 
   Producto "1" --> "*" Lote : Contiene
   Lote "1" *-- "*" Perdida : Registra
-  Lote "1" --> "*" Detalles de Venta : Se vende
-  Venta "1" --> "*" Detalles de Venta : Contiene
+  Lote "1" --> "*" Detalles_Venta : Se vende
+  Venta "1" --> "*" Detalles_Venta : Contiene
 ```
 
 
