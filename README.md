@@ -83,7 +83,7 @@ classDiagram
 
 
 
-# Caso de uso
+#  diagramas de secuencia
  
 
 
