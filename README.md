@@ -38,29 +38,46 @@ ver registros de ganacias, se mostrara los productos más vendidos, con las gana
 # Entindad relación BD
 ```mermaid
 classDiagram
-  class Customer {
-    +String name
-    +String email
+  class Producto {
+    +Int Id_Producto PK
+    +String nombre
+    +Int precio_venta
   }
 
-  class Order {
-    +String id
-    +Date placedAt
-    +total() Money
+  class Lote {
+    +Int id_Lote
+    +Int id_Producto
+    +Int precio_compra
+    +Date Fecha_Vencimiento
+    +Int Unidades
   }
 
-  class LineItem {
-    +int quantity
+  class Perdida {
+    +Int Id_perdida PK
+    +Int Id_Lote FK
+    +Int Cantidad
+    +String Motivo
+    +Date Fecha
   }
 
-  class Payment {
-    <<interface>>
-    +authorise() bool
+  class Venta {
+    +Int Id_venta PK
+    +Date Fecha
+    +Int Total
   }
 
-  Customer "1" --> "*" Order : places
-  Order "1" *-- "*" LineItem : contains
-  Order --> Payment : settled by
+    class Detalles de Venta{
+    +Int Id_detalle PK
+    +Int Id_venta FK
+    +Int Id_lote FK
+    +Int Cantidad
+    +Int Precio_Unitario
+  }
+
+  Producto "1" --> "*" Lote : Contiene
+  Lote "1" *-- "*" Perdida : Tiene
+  Lote "*" --> "*" Venta : Genera
+  Venta "1" --> "*" Detalles de Venta : Genera
 ```
 
 
