@@ -75,9 +75,9 @@ classDiagram
   }
 
   Producto "1" --> "*" Lote : Contiene
-  Lote "1" *-- "*" Perdida : Tiene
-  Lote "*" --> "*" Venta : Genera
-  Venta "1" --> "*" Detalles de Venta : Genera
+  Lote "1" *-- "*" Perdida : Registra
+  Lote "1" --> "*" Detalles de Venta : Se vende
+  Venta "1" --> "*" Detalles de Venta : Contiene
 ```
 
 
