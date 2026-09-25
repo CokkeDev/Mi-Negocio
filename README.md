@@ -85,7 +85,7 @@ classDiagram
 
 #  diagramas de secuencia
 
-## Usuario Compra mercadería y debe de registrar los productos en el sistema
+Usuario Compra mercadería y debe de registrar los productos en el sistema
  
 ```mermaid
 sequenceDiagram
