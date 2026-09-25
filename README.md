@@ -95,11 +95,11 @@ sequenceDiagram
     Usuario->>Home: AgregaProducto();
     Home->>DataBase: ExisteProducto();
 
-    alt Existe Producto Registrado
+    alt Producto Registrado
         DataBase-->>DataBase: Si existe
         DataBase-->>Home: ExisteProducto();
         Home-->>Usuario: No se pudo agregar, el producto ya existe.
-    else Producto No registrado
+    else Producto No Registrado
         DataBase-->>DataBase: No existe
         DataBase-->>Home: ExisteProducto();
         Home-->>Usuario: Producto agregado exitosamente.
