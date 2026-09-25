@@ -85,5 +85,22 @@ classDiagram
 
 #  diagramas de secuencia
  
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant Home
+    participant DataBase
+    Usuario->>Home: AgregaProducto();
+    Home->>DataBase: ExisteProducto();
 
+    alt Existe Producto Registrado
+        DataBase-->>DataBase: Si existe
+        DataBase-->>Home: ExisteProducto();
+        Home-->>Usuario: No se pudo agregar, el producto ya existe.
+    else Producto No registrado
+        DataBase-->>DataBase: No existe
+        DataBase-->>Home: ExisteProducto();
+        Home-->>Usuario: Producto agregado exitosamente.
+    end
+```
 
