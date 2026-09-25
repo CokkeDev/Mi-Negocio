@@ -39,8 +39,10 @@ ver registros de ganacias, se mostrara los productos más vendidos, con las gana
 ```mermaid
 classDiagram
   class Producto {
+    +Varchar imagen_producto
     +Int Id_Producto PK
     +String nombre
+    +String nombre_normalizado
     +Int precio_venta
   }
 
@@ -81,11 +83,9 @@ classDiagram
 ```
 
 
-
-
 #  diagramas de secuencia
 
-Usuario Compra mercadería y debe de registrar los productos en el sistema
+Usuario Compra mercadería y debe de registrar los productos en el sistema.
  
 ```mermaid
 sequenceDiagram
@@ -106,3 +106,53 @@ sequenceDiagram
     end
 ```
 
+Cuando el usuario abre la aplicación, se encuentra en el Home. Para agregar un nuevo producto, debe seleccionar el botón "+", lo que abrirá la pantalla AgregarProducto().
+
+En esta pantalla, el usuario deberá ingresar la imagen, nombre y precio de venta del producto. Una vez completada la información, la aplicación ejecutará la función ExisteProducto(), que consultará la base de datos para verificar si ya existe un producto con el mismo nombre.
+
+Antes de realizar la comparación, el nombre ingresado será normalizado, considerando mayúsculas, minúsculas, acentos y caracteres especiales, con el objetivo de evitar registros duplicados por diferencias de escritura.
+
+Si el producto ya existe: se informará al usuario que el producto ya se encuentra registrado y no se realizará la inserción.
+Si el producto no existe: se almacenará el nuevo producto en la base de datos y se mostrará en el Home.
+
+Como el producto recién creado no posee ningún lote asociado, se mostrará en color gris, indicando que actualmente no cuenta con unidades disponibles para la venta.
+
+# Diagrama enfocado en la arquitectura MVVM del caso anterior
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant Screen as AgregarProductoScreen
+    participant VM as ProductoViewModel
+    participant Repo as ProductoRepository
+    participant DAO as ProductoDAO
+    participant DB as SQLite
+
+    Usuario->>Screen: Completar datos del producto
+    Usuario->>Screen: Presionar "Agregar"
+    Screen->>VM: AgregarProducto(producto)
+    VM->>VM: Normalizar nombre
+    VM->>Repo: ExisteProducto(nombreNormalizado)
+    Repo->>DAO: ExisteProducto(nombreNormalizado)
+    DAO->>DB: Consultar producto
+
+    alt Producto Registrado
+        DB-->>DAO: Producto encontrado
+        DAO-->>Repo: true
+        Repo-->>VM: true
+        VM-->>Screen: Producto ya existe
+        Screen-->>Usuario: No se pudo agregar, el producto ya existe.
+    else Producto No Registrado
+        DB-->>DAO: Producto no encontrado
+        DAO-->>Repo: false
+        Repo-->>VM: false
+        VM->>Repo: InsertarProducto(producto)
+        Repo->>DAO: InsertarProducto(producto)
+        DAO->>DB: Insertar producto
+        DB-->>DAO: Producto guardado
+        DAO-->>Repo: Confirmación
+        Repo-->>VM: Producto creado
+        VM-->>Screen: Actualizar pantalla
+        Screen-->>Usuario: Producto agregado exitosamente.
+    end
+```
