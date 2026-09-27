@@ -168,6 +168,8 @@ sequenceDiagram
         Home-->>DataBase: Almacenarlote(Sku,Precio_Compra,unidades,fecha_vencimiento);
         DataBase-->>DataBase: VerificadorSku(Sku);
         DataBase-->>Home: ERROR existe Lote registrado
+        Home-->>User: ERROR existe Lote registrado
+
     else Lote no se encuentra registrado
         DataBase-->>DataBase: No existe
         DataBase-->>Home: Lote agregado exitosamente;
