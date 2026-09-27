@@ -47,7 +47,7 @@ classDiagram
   }
 
   class Lote {
-    +Int id_Lote
+    +Int SKU
     +Int id_Producto
     +Int precio_compra
     +Date Fecha_Vencimiento
