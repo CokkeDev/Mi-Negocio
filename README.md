@@ -154,3 +154,23 @@ sequenceDiagram
         Screen-->>Usuario: Producto agregado exitosamente.
     end
 ```
+# Diagrama de secuencia (Usuario ingresa Lotes de productos)
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant Home
+    participant DataBase
+    Usuario->>Home: SelectProducto();
+    Home->>Usuario: InfoLote(Sku,Precio_Compra,unidades,fecha_vencimiento);
+
+    alt Lote se encuentra registrado
+        Home-->>DataBase: Almacenarlote(Sku,Precio_Compra,unidades,fecha_vencimiento);
+        DataBase-->>DataBase: VerificadorSku(Sku);
+        DataBase-->>Home: ERROR existe Lote registrado
+    else Lote no se encuentra registrado
+        DataBase-->>DataBase: No existe
+        DataBase-->>Home: Lote agregado exitosamente;
+        Home-->>Usuario: Lote agregado exitosamente;
+    end
+```
