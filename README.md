@@ -244,9 +244,9 @@ sequenceDiagram
 
     else Venta rechazada
         Usuario->>Home: BoletaRechazada();
-        Home->>BaseDatos: BoletaRechazada();
-        BaseDatos->>BaseDatos: LiberaLotes();
-        BaseDatos->>Home: VentaRechazada();
+        Home->>DataBase: BoletaRechazada();
+        DataBase->>DataBase: LiberaLotes();
+        DataBase->>Home: VentaRechazada();
         Home->>Usuario: VentaRechazada();
     end
 ```
