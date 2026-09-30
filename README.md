@@ -233,7 +233,7 @@ sequenceDiagram
     Usuario->>DataBase: Selectproductos();
     DataBase->>DataBase: CreaBoleta();
     DataBase->>Home: BoletaVenta();
-    Home->> Usuario: BoletaVenta();
+    Home->>Usuario: BoletaVenta();
 
     alt Venta aceptada
     Usuario->>Home: BoletaAceptada();
@@ -249,8 +249,6 @@ sequenceDiagram
     BaseDatos->>Home: VentaRechazada();
     Home->>Usuario: VentaRechazada();
 ```
-
-
 
 # Diagraama MVVM (Usuario vende varios lotes)
 
