@@ -236,18 +236,19 @@ sequenceDiagram
     Home->>Usuario: BoletaVenta();
 
     alt Venta aceptada
-    Usuario->>Home: BoletaAceptada();
-    Home->>DataBase: BoletaAceptada();
-    DataBase->>Database: DescontarLotes();
-    DataBase->>Home: VentaRealizada();
-    Home->>Usuario: VentaRealizada();
+        Usuario->>Home: BoletaAceptada();
+        Home->>DataBase: BoletaAceptada();
+        DataBase->>Database: DescontarLotes();
+        DataBase->>Home: VentaRealizada();
+        Home->>Usuario: VentaRealizada();
 
     else Venta rechazada
-    Usuario->>Home: BoletaRechazada();
-    Home->>BaseDatos: BoletaRechazada();
-    BaseDatos->>BaseDatos: LiberaLotes();
-    BaseDatos->>Home: VentaRechazada();
-    Home->>Usuario: VentaRechazada();
+        Usuario->>Home: BoletaRechazada();
+        Home->>BaseDatos: BoletaRechazada();
+        BaseDatos->>BaseDatos: LiberaLotes();
+        BaseDatos->>Home: VentaRechazada();
+        Home->>Usuario: VentaRechazada();
+    end
 ```
 
 # Diagraama MVVM (Usuario vende varios lotes)
