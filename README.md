@@ -176,3 +176,48 @@ sequenceDiagram
         Home-->>Usuario: Lote agregado exitosamente;
     end
 ```
+
+# Diagrama MVVM
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant View as HomeScreen
+    participant VM as ProductoViewModel
+    participant Repo as LoteRepository
+    participant DAO as LoteDAO
+    participant DB as SQLite
+
+    Usuario->>View: SeleccionarProducto(SKU)
+    View->>VM: SeleccionarProducto(SKU)
+    VM-->>View: Mostrar información del producto
+
+    Usuario->>View: Ingresar datos del lote
+    View->>VM: AgregarLote(SKU, PrecioCompra, Unidades, FechaVencimiento)
+
+    VM->>VM: Validar datos del lote
+    VM->>Repo: ExisteLote(SKU)
+    Repo->>DAO: ExisteLote(SKU)
+    DAO->>DB: Consultar lote por SKU
+
+    alt Lote registrado
+        DB-->>DAO: Lote encontrado
+        DAO-->>Repo: true
+        Repo-->>VM: true
+        VM-->>View: Error: Lote ya registrado
+        View-->>Usuario: ERROR: Existe un lote registrado
+    else Lote no registrado
+        DB-->>DAO: Lote no encontrado
+        DAO-->>Repo: false
+        Repo-->>VM: false
+
+        VM->>Repo: AlmacenarLote(lote)
+        Repo->>DAO: InsertarLote(lote)
+        DAO->>DB: INSERT Lote
+        DB-->>DAO: Lote almacenado
+        DAO-->>Repo: Confirmación
+        Repo-->>VM: Lote agregado exitosamente
+        VM-->>View: Actualizar estado
+        View-->>Usuario: Lote agregado exitosamente
+    end
+```
