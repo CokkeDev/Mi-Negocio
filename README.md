@@ -238,7 +238,7 @@ sequenceDiagram
     alt Venta aceptada
         Usuario->>Home: BoletaAceptada();
         Home->>DataBase: BoletaAceptada();
-        DataBase->>Database: DescontarLotes();
+        DataBase->>DataBase: DescontarLotes();
         DataBase->>Home: VentaRealizada();
         Home->>Usuario: VentaRealizada();
 
