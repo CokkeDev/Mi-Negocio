@@ -177,7 +177,7 @@ sequenceDiagram
     end
 ```
 
-# Diagrama MVVM
+# Diagrama MVVM (Usuario ingresa Lotes de productos)
 
 ```mermaid
 sequenceDiagram
@@ -221,3 +221,44 @@ sequenceDiagram
         View-->>Usuario: Lote agregado exitosamente
     end
 ```
+# Diagrama de secuencia (Usuario vende varios lotes)
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant Home
+    participant DataBase
+    Usuario->>Home: venderlote();
+    Home->>Usuario: Selectproductos();
+    Usuario->>DataBase: Selectproductos();
+    DataBase->>DataBase: CreaBoleta();
+    DataBase->>Home: BoletaVenta();
+    Home->> Usuario: BoletaVenta();
+
+    alt Venta aceptada
+    Usuario->>Home: BoletaAceptada();
+    Home->>DataBase: BoletaAceptada();
+    DataBase->>Database: DescontarLotes();
+    DataBase->>Home: VentaRealizada();
+    Home->>Usuario: VentaRealizada();
+
+    else Venta rechazada
+    Usuario->>Home: BoletaRechazada();
+    Home->>BaseDatos: BoletaRechazada();
+    BaseDatos->>BaseDatos: LiberaLotes();
+    BaseDatos->>Home: VentaRechazada();
+    Home->>Usuario: VentaRechazada();
+```
+
+
+
+# Diagraama MVVM (Usuario vende varios lotes)
+
+# Diagrama de secuencia (Usuario elimina productos)
+
+# Diagrama MVVM (usuario elimina productos)
+
+# Diagrama de secuencia (Sistema alerta de merma por fecha de vencimiento)
+
+# Diagrama MVVM (Sistema alerta de merma por fechas de vencimiento)
+
