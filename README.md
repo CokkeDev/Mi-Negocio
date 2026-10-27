@@ -39,19 +39,23 @@ ver registros de ganacias, se mostrara los productos más vendidos, con las gana
 ```mermaid
 classDiagram
   class Producto {
-    +Varchar imagen_producto
     +Int Id_Producto PK
+    +string sku UK 
     +String nombre
     +String nombre_normalizado
+    +string URL_imagen
     +Int precio_venta
+    +Int activo
   }
 
   class Lote {
-    +Int SKU
-    +Int id_Producto
+    +Int id_lote PK
+    +Int id_Producto FK
     +Int precio_compra
-    +Date Fecha_Vencimiento
-    +Int Unidades
+    +Date fecha_ingreso
+    +Date Fecha_Vencimiento nullable
+    +Int Unidades_Iniciales
+    +Int unidades_Disponibles
   }
 
   class Perdida {
@@ -59,6 +63,7 @@ classDiagram
     +Int Id_Lote FK
     +Int Cantidad
     +String Motivo
+    +String Nota (opcional)
     +Date Fecha
   }
 
@@ -71,113 +76,80 @@ classDiagram
     class Detalles_Venta{
     +Int Id_detalle PK
     +Int Id_venta FK
-    +Int Id_lote FK
+    +Int Id_Lote FK
     +Int Cantidad
     +Int Precio_Unitario
   }
 
-  Producto "1" --> "*" Lote : Contiene
+  Producto "1" --> "*" Lote : tiene
   Lote "1" *-- "*" Perdida : Registra
-  Lote "1" --> "*" Detalles_Venta : Se vende
+  Lote "1" --> "*" Detalles_Venta : Se vende en
   Venta "1" --> "*" Detalles_Venta : Contiene
 ```
 
-
-#  diagramas de secuencia (Usuario Compra mercadería y debe de registrar los productos en el sistema)
-
-```mermaid
-sequenceDiagram
-    actor Usuario
-    participant Home
-    participant DataBase
-    Usuario->>Home: AgregaProducto();
-    Home->>DataBase: ExisteProducto();
-
-    alt Producto Registrado
-        DataBase-->>DataBase: Si existe
-        DataBase-->>Home: ExisteProducto();
-        Home-->>Usuario: No se pudo agregar, el producto ya existe.
-    else Producto No Registrado
-        DataBase-->>DataBase: No existe
-        DataBase-->>Home: ExisteProducto();
-        Home-->>Usuario: Producto agregado exitosamente.
-    end
-```
-
-Cuando el usuario abre la aplicación, se encuentra en el Home. Para agregar un nuevo producto, debe seleccionar el botón "+", lo que abrirá la pantalla AgregarProducto().
-
-En esta pantalla, el usuario deberá ingresar la imagen, nombre y precio de venta del producto. Una vez completada la información, la aplicación ejecutará la función ExisteProducto(), que consultará la base de datos para verificar si ya existe un producto con el mismo nombre.
-
-Antes de realizar la comparación, el nombre ingresado será normalizado, considerando mayúsculas, minúsculas, acentos y caracteres especiales, con el objetivo de evitar registros duplicados por diferencias de escritura.
-
-Si el producto ya existe: se informará al usuario que el producto ya se encuentra registrado y no se realizará la inserción.
-Si el producto no existe: se almacenará el nuevo producto en la base de datos y se mostrará en el Home.
-
-Como el producto recién creado no posee ningún lote asociado, se mostrará en color gris, indicando que actualmente no cuenta con unidades disponibles para la venta.
-
-# Diagrama enfocado en la arquitectura MVVM del caso anterior
+# Registro de producto (MVVM)
 
 ```mermaid
 sequenceDiagram
     actor Usuario
+    participant Scanner as EscanerCamara
     participant Screen as AgregarProductoScreen
     participant VM as ProductoViewModel
     participant Repo as ProductoRepository
     participant DAO as ProductoDAO
     participant DB as SQLite
 
-    Usuario->>Screen: Completar datos del producto
-    Usuario->>Screen: Presionar "Agregar"
+    Usuario->>Screen: Completar nombre, precio e imagen
+    opt Producto con código de barras
+        Usuario->>Screen: Presionar escanear SKU
+        Screen->>Scanner: Activar cámara
+        Scanner-->>Screen: Código detectado
+    end
+    Usuario->>Screen: Presionar Agregar
     Screen->>VM: AgregarProducto(producto)
+    VM->>VM: Validar datos
     VM->>VM: Normalizar nombre
-    VM->>Repo: ExisteProducto(nombreNormalizado)
-    Repo->>DAO: ExisteProducto(nombreNormalizado)
-    DAO->>DB: Consultar producto
+    VM->>Repo: BuscarDuplicado(nombreNormalizado, sku)
+    Repo->>DAO: BuscarDuplicado(nombreNormalizado, sku)
+    DAO->>DB: SELECT producto WHERE nombre_normalizado = ? OR sku = ?
+    DB-->>DAO: Resultado
+    DAO-->>Repo: Producto o null
+    Repo-->>VM: Producto o null
 
-    alt Producto Registrado
-        DB-->>DAO: Producto encontrado
-        DAO-->>Repo: true
-        Repo-->>VM: true
-        VM-->>Screen: Producto ya existe
-        Screen-->>Usuario: No se pudo agregar, el producto ya existe.
-    else Producto No Registrado
-        DB-->>DAO: Producto no encontrado
-        DAO-->>Repo: false
-        Repo-->>VM: false
+    alt Existe y está activo
+        VM-->>Screen: Error: producto duplicado
+        Screen-->>Usuario: No se pudo agregar, el producto ya existe
+    else Existe pero está eliminado
+        VM-->>Screen: Ofrecer reactivar
+        Screen-->>Usuario: Desea reactivar el producto
+        alt Usuario acepta
+            Usuario->>Screen: Reactivar
+            Screen->>VM: ReactivarProducto(idProducto)
+            VM->>Repo: Reactivar(idProducto)
+            Repo->>DAO: Reactivar(idProducto)
+            DAO->>DB: UPDATE producto SET activo = 1
+            DB-->>DAO: OK
+            DAO-->>Repo: Confirmación
+            Repo-->>VM: Producto reactivado
+            VM-->>Screen: Actualizar estado
+            Screen-->>Usuario: Producto reactivado exitosamente
+        else Usuario cancela
+            Screen-->>Usuario: Operación cancelada
+        end
+    else No existe
         VM->>Repo: InsertarProducto(producto)
         Repo->>DAO: InsertarProducto(producto)
-        DAO->>DB: Insertar producto
-        DB-->>DAO: Producto guardado
+        DAO->>DB: INSERT INTO producto
+        DB-->>DAO: id_producto generado
         DAO-->>Repo: Confirmación
         Repo-->>VM: Producto creado
-        VM-->>Screen: Actualizar pantalla
-        Screen-->>Usuario: Producto agregado exitosamente.
-    end
-```
-# Diagrama de secuencia (Usuario ingresa Lotes de productos)
-
-```mermaid
-sequenceDiagram
-    actor Usuario
-    participant Home
-    participant DataBase
-    Usuario->>Home: SelectProducto();
-    Home->>Usuario: InfoLote(Sku,Precio_Compra,unidades,fecha_vencimiento);
-
-    alt Lote se encuentra registrado
-        Home-->>DataBase: Almacenarlote(Sku,Precio_Compra,unidades,fecha_vencimiento);
-        DataBase-->>DataBase: VerificadorSku(Sku);
-        DataBase-->>Home: ERROR existe Lote registrado
-        Home-->>Usuario: ERROR existe Lote registrado
-
-    else Lote no se encuentra registrado
-        DataBase-->>DataBase: No existe
-        DataBase-->>Home: Lote agregado exitosamente;
-        Home-->>Usuario: Lote agregado exitosamente;
+        VM-->>Screen: Actualizar estado
+        Screen-->>Usuario: Producto agregado exitosamente
+        Note over Screen,Usuario: Se muestra en gris porque aún no tiene lotes
     end
 ```
 
-# Diagrama MVVM (Usuario ingresa Lotes de productos)
+# Ingreso de lotes (MVVM)
 
 ```mermaid
 sequenceDiagram
@@ -188,76 +160,175 @@ sequenceDiagram
     participant DAO as LoteDAO
     participant DB as SQLite
 
-    Usuario->>View: SeleccionarProducto(SKU)
-    View->>VM: SeleccionarProducto(SKU)
+    Usuario->>View: SeleccionarProducto(idProducto o SKU)
+    View->>VM: SeleccionarProducto(idProducto)
     VM-->>View: Mostrar información del producto
 
     Usuario->>View: Ingresar datos del lote
-    View->>VM: AgregarLote(SKU, PrecioCompra, Unidades, FechaVencimiento)
+    View->>VM: AgregarLote(idProducto, PrecioCompra, Unidades, FechaVencimiento)
 
     VM->>VM: Validar datos del lote
-    VM->>Repo: ExisteLote(SKU)
-    Repo->>DAO: ExisteLote(SKU)
-    DAO->>DB: Consultar lote por SKU
+    Note over VM: unidades mayor a 0, precio mayor o igual a 0, vencimiento opcional
 
-    alt Lote registrado
-        DB-->>DAO: Lote encontrado
-        DAO-->>Repo: true
-        Repo-->>VM: true
-        VM-->>View: Error: Lote ya registrado
-        View-->>Usuario: ERROR: Existe un lote registrado
-    else Lote no registrado
-        DB-->>DAO: Lote no encontrado
-        DAO-->>Repo: false
-        Repo-->>VM: false
-
+    alt Datos inválidos
+        VM-->>View: Error: datos inválidos
+        View-->>Usuario: ERROR: revise los datos ingresados
+    else Datos válidos
+        VM->>VM: fechaIngreso = hoy
+        VM->>VM: unidadesDisponibles = unidadesIniciales
         VM->>Repo: AlmacenarLote(lote)
         Repo->>DAO: InsertarLote(lote)
         DAO->>DB: INSERT Lote
-        DB-->>DAO: Lote almacenado
+        DB-->>DAO: id_lote generado
         DAO-->>Repo: Confirmación
         Repo-->>VM: Lote agregado exitosamente
         VM-->>View: Actualizar estado
         View-->>Usuario: Lote agregado exitosamente
+        Note over View,Usuario: El producto deja de verse gris porque ahora tiene stock
     end
 ```
-# Diagrama de secuencia (Usuario vende varios lotes)
+# Venta con escaneo de SKU (MVVM)
 
 ```mermaid
 sequenceDiagram
     actor Usuario
-    participant Home
-    participant DataBase
-    Usuario->>Home: venderlote();
-    Home->>Usuario: Selectproductos();
-    Usuario->>DataBase: Selectproductos();
-    DataBase->>DataBase: CreaBoleta();
-    DataBase->>Home: BoletaVenta();
-    Home->>Usuario: BoletaVenta();
+    participant Scanner as EscanerCamara
+    participant View as VentaScreen
+    participant VM as VentaViewModel
+    participant PRepo as ProductoRepository
+    participant VRepo as VentaRepository
+    participant DAO as ProductoDAO / VentaDAO
+    participant DB as SQLite
+
+    Usuario->>View: Iniciar venta
+    View->>VM: IniciarVenta()
+    VM->>VM: Crear boleta vacía en memoria
+    View->>Scanner: Activar cámara
+
+    loop Por cada producto
+        alt Producto con código
+            Usuario->>Scanner: Apuntar al código de barras
+            Scanner->>View: Código detectado
+            View->>VM: EscanearSku(codigo)
+            VM->>PRepo: BuscarPorSku(codigo)
+            PRepo->>DAO: SELECT producto y stock WHERE sku = ?
+        else Producto sin código
+            Usuario->>View: Tocar producto en el Home
+            View->>VM: AgregarProducto(idProducto)
+            VM->>PRepo: ObtenerConStock(idProducto)
+            PRepo->>DAO: SELECT producto y stock WHERE id = ?
+        end
+        DAO->>DB: Consultar producto y SUM(unidades_disponibles)
+        DB-->>DAO: Resultado
+        DAO-->>PRepo: Producto y stock o null
+        PRepo-->>VM: Producto y stock o null
+
+        alt Producto no encontrado
+            VM-->>View: Error: SKU no registrado
+            View-->>Usuario: Ofrecer registrar el producto
+        else Stock = 0
+            VM-->>View: Error: sin stock
+            View-->>Usuario: Mostrar mensaje
+        else Producto válido
+            alt Ya está en la boleta
+                VM->>VM: Cantidad + 1 (máximo el stock disponible)
+            else Nuevo en la boleta
+                VM->>VM: Agregar línea con cantidad 1
+            end
+            VM->>VM: Recalcular total
+            VM-->>View: Actualizar boleta
+            View-->>Usuario: Producto agregado (vibración o sonido)
+        end
+    end
 
     alt Venta aceptada
-        Usuario->>Home: BoletaAceptada();
-        Home->>DataBase: BoletaAceptada();
-        DataBase->>DataBase: DescontarLotes();
-        DataBase->>Home: VentaRealizada();
-        Home->>Usuario: VentaRealizada();
+        Usuario->>View: Aceptar boleta
+        View->>VM: ConfirmarVenta()
+        VM->>VRepo: RegistrarVenta(boleta)
+        VRepo->>DAO: Iniciar transacción
+        DAO->>DB: BEGIN
+        DAO->>DB: INSERT INTO venta
+        loop Por cada línea de la boleta
+            DAO->>DB: SELECT lotes con stock ORDER BY fecha_vencimiento
+            DB-->>DAO: Lotes disponibles
+            loop Hasta cubrir la cantidad
+                DAO->>DB: UPDATE lote SET unidades_disponibles = unidades_disponibles - n
+                DAO->>DB: INSERT INTO detalle_venta (id_lote, cantidad, precio_unitario)
+            end
+        end
 
+        alt Todo correcto
+            DAO->>DB: COMMIT
+            DAO-->>VRepo: Venta registrada
+            VRepo-->>VM: Éxito
+            VM->>VM: Limpiar boleta
+            VM-->>View: Actualizar stock en Home
+            View-->>Usuario: Venta realizada
+        else Error (stock insuficiente o fallo de BD)
+            DAO->>DB: ROLLBACK
+            DAO-->>VRepo: Error
+            VRepo-->>VM: Error
+            VM-->>View: Error al registrar
+            View-->>Usuario: No se pudo registrar la venta
+        end
     else Venta rechazada
-        Usuario->>Home: BoletaRechazada();
-        Home->>DataBase: BoletaRechazada();
-        DataBase->>DataBase: LiberaLotes();
-        DataBase->>Home: VentaRechazada();
-        Home->>Usuario: VentaRechazada();
+        Usuario->>View: Rechazar boleta
+        View->>VM: CancelarVenta()
+        VM->>VM: Descartar boleta
+        VM-->>View: Volver al Home
+        View-->>Usuario: Venta cancelada
     end
 ```
 
-# Diagraama MVVM (Usuario vende varios lotes)
+# Merma (MVVM)
 
-# Diagrama de secuencia (Usuario elimina productos)
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant View as MermaScreen
+    participant VM as MermaViewModel
+    participant LRepo as LoteRepository
+    participant PRepo as PerdidaRepository
+    participant DAO as LoteDAO / PerdidaDAO
+    participant DB as SQLite
 
-# Diagrama MVVM (usuario elimina productos)
+    Usuario->>View: Seleccionar producto
+    View->>VM: CargarLotes(idProducto)
+    VM->>LRepo: ObtenerLotesConStock(idProducto)
+    LRepo->>DAO: ObtenerLotesConStock(idProducto)
+    DAO->>DB: SELECT lotes WHERE unidades_disponibles mayor a 0
+    DB-->>DAO: Lotes
+    DAO-->>LRepo: Lotes
+    LRepo-->>VM: Lotes
+    VM-->>View: Mostrar lotes (vencimiento y unidades)
 
-# Diagrama de secuencia (Sistema alerta de merma por fecha de vencimiento)
+    Usuario->>View: Elegir lote, cantidad, motivo y nota
+    View->>VM: RegistrarMerma(idLote, cantidad, motivo, nota)
+    VM->>VM: Validar datos (cantidad mayor a 0 y menor o igual a las disponibles)
 
-# Diagrama MVVM (Sistema alerta de merma por fechas de vencimiento)
+    alt Datos inválidos
+        VM-->>View: Error de validación
+        View-->>Usuario: ERROR: revise los datos ingresados
+    else Datos válidos
+        VM->>PRepo: RegistrarPerdida(perdida)
+        PRepo->>DAO: RegistrarPerdida(perdida)
+        DAO->>DB: BEGIN
+        DAO->>DB: UPDATE lote SET unidades_disponibles = unidades_disponibles - cantidad
+        DAO->>DB: INSERT INTO perdida (id_lote, cantidad, motivo, nota, fecha)
+
+        alt Todo correcto
+            DAO->>DB: COMMIT
+            DAO-->>PRepo: Confirmación
+            PRepo-->>VM: Merma registrada
+            VM-->>View: Actualizar estado
+            View-->>Usuario: Merma registrada exitosamente
+        else Error (CHECK de stock o fallo de BD)
+            DAO->>DB: ROLLBACK
+            DAO-->>PRepo: Error
+            PRepo-->>VM: Error
+            VM-->>View: Error al registrar
+            View-->>Usuario: No se pudo registrar la merma
+        end
+    end
+```
 
