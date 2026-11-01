@@ -249,7 +249,7 @@ sequenceDiagram
         DAO->>DB: BEGIN
         DAO->>DB: INSERT INTO venta
         loop Por cada línea de la boleta
-            DAO->>DB: SELECT lotes con stock ORDER BY fecha_vencimiento
+            DAO->>DB: SELECT lotes con stock ORDER BY fecha_vencimiento IS NULL, fecha_vencimiento, fecha_ingreso
             DB-->>DAO: Lotes disponibles
             loop Hasta cubrir la cantidad
                 DAO->>DB: UPDATE lote SET unidades_disponibles = unidades_disponibles - n
