@@ -45,9 +45,11 @@ kotlin {
 }
 
 dependencies {
-  val composeBom = platform(libs.androidx.compose.bom)
-  implementation(composeBom)
-  androidTestImplementation(composeBom)
+  // El BOM debe ir en ambas configuraciones; el inspector lo marca como duplicado por error
+  @Suppress("AvoidDuplicateDependencies")
+  implementation(platform(libs.androidx.compose.bom))
+  @Suppress("AvoidDuplicateDependencies")
+  androidTestImplementation(platform(libs.androidx.compose.bom))
 
   // Core Android dependencies
   implementation(libs.androidx.core.ktx)
@@ -68,11 +70,11 @@ dependencies {
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-  // Local tests: jUnit, coroutines, Android runner
+  // Local tests: JUnit, coroutines, Android runner
   testImplementation(libs.junit)
   testImplementation(libs.kotlinx.coroutines.test)
 
-  // Instrumented tests: jUnit rules and runners
+  // Instrumented tests: JUnit rules and runners
   androidTestImplementation(libs.androidx.test.core)
   androidTestImplementation(libs.androidx.test.ext.junit)
   androidTestImplementation(libs.androidx.test.runner)
