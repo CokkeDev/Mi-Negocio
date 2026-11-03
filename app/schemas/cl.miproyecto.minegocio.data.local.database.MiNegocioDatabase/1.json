@@ -1,0 +1,85 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "c3d2fb18ad785810606dcd5c0e1c7659",
+    "entities": [
+      {
+        "tableName": "producto",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id_producto` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sku` TEXT, `nombre` TEXT NOT NULL, `nombre_normalizado` TEXT NOT NULL, `URL_imagen` TEXT, `precio_venta` INTEGER NOT NULL, `activo` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "idProducto",
+            "columnName": "id_producto",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sku",
+            "columnName": "sku",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombreNormalizado",
+            "columnName": "nombre_normalizado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "urlImagen",
+            "columnName": "URL_imagen",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "precioVenta",
+            "columnName": "precio_venta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activo",
+            "columnName": "activo",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id_producto"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_producto_sku",
+            "unique": true,
+            "columnNames": [
+              "sku"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_producto_sku` ON `${TABLE_NAME}` (`sku`)"
+          },
+          {
+            "name": "index_producto_nombre_normalizado",
+            "unique": true,
+            "columnNames": [
+              "nombre_normalizado"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_producto_nombre_normalizado` ON `${TABLE_NAME}` (`nombre_normalizado`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c3d2fb18ad785810606dcd5c0e1c7659')"
+    ]
+  }
+}

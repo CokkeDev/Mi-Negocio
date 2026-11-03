@@ -44,6 +44,10 @@ kotlin {
   jvmToolchain(17)
 }
 
+ksp{
+  arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
   // El BOM debe ir en ambas configuraciones; el inspector lo marca como duplicado por error
   @Suppress("AvoidDuplicateDependencies")
