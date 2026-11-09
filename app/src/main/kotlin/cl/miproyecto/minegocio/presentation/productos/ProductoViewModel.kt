@@ -9,6 +9,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import cl.miproyecto.minegocio.MiNegocioApplication
 
 class ProductoViewModel(
     private val repository: ProductoRepository,
@@ -83,5 +87,16 @@ class ProductoViewModel(
     // ── BLOQUE D: cancelar ──
     fun cancelarReactivacion() {
         _uiState.value = AgregarProductoUiState.Inicial
+    }
+
+    // --- Bloque E: el Factory ---
+    companion object{
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]
+                as MiNegocioApplication
+                ProductoViewModel(app.productoRepository)
+            }
+        }
     }
 }
