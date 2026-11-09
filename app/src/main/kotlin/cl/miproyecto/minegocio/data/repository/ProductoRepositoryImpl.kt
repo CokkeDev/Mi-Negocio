@@ -42,6 +42,11 @@ class ProductoRepositoryImpl(
     override suspend fun reactivar(idProducto: Long): Int =
         dao.reactivar(idProducto)
 
+    // Aquí tampoco hay productos que traducir: entra un id y sale un número.
+    // Se llama a desactivar() del DAO, que pone activo = 0.
+    override suspend fun eliminar(idProducto: Long): Int =
+        dao.desactivar(idProducto)
+
     // El DAO entrega un Flow<List<ProductoEntity>> y hay que devolver un Flow<List<Producto>>.
     // Son dos "cajas", una dentro de otra, por eso hay dos "map":
     //   1) .map { lista -> ... }    -> cada vez que el Flow envía una lista nueva, se procesa.

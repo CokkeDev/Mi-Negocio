@@ -38,6 +38,12 @@ interface ProductoDao {
     @Query("UPDATE producto SET activo = 1 WHERE id_producto = :idProducto")
     suspend fun reactivar(idProducto: Long): Int
 
+    // Elimina un producto de forma "lógica": no lo borra, solo lo marca como inactivo (activo = 0).
+    // Así se conserva su historial y después se puede reactivar.
+    // Devuelve la cantidad de filas modificadas (1 = ok, 0 = no existe).
+    @Query("UPDATE producto SET activo = 0 WHERE id_producto = :idProducto")
+    suspend fun desactivar(idProducto: Long): Int
+
     //Obtener productos activos
     // Trae todos los productos que no están eliminados, ordenados por nombre (A → Z).
     // Devuelve un Flow: es como una "suscripción". Cada vez que la tabla cambia
@@ -45,4 +51,5 @@ interface ProductoDao {
     // y la pantalla se actualiza sola. Por eso no lleva "suspend".
     @Query ("SELECT * FROM producto WHERE activo = 1 ORDER BY nombre")
     fun obtenerActivos(): Flow<List<ProductoEntity>>
+
 }

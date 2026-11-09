@@ -28,6 +28,10 @@ interface ProductoRepository {
     // Devuelve cuántos productos se modificaron (1 = ok, 0 = no existe).
     suspend fun reactivar(idProducto: Long): Int
 
+    // Elimina un producto (lo marca como inactivo, no lo borra).
+    // Devuelve cuántos productos se modificaron (1 = ok, 0 = no existe).
+    suspend fun eliminar(idProducto: Long): Int
+
     // Entrega la lista de productos activos y avisa sola cada vez que cambia.
     // No lleva "suspend" porque devuelve un Flow.
     fun obtenerActivos(): Flow<List<Producto>>
