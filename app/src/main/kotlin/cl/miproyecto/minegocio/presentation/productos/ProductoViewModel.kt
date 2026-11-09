@@ -58,6 +58,7 @@ class ProductoViewModel(
                         )
                         AgregarProductoUiState.ProductoAgregado
                     }
+
                     existente.activo -> AgregarProductoUiState.YaExiste
                     else -> AgregarProductoUiState.OfrecerReactivar(existente)
                 }
@@ -90,11 +91,11 @@ class ProductoViewModel(
     }
 
     // --- Bloque E: el Factory ---
-    companion object{
+    companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]
-                as MiNegocioApplication
+                        as MiNegocioApplication
                 ProductoViewModel(app.productoRepository)
             }
         }
