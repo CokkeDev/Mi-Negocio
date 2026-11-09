@@ -94,9 +94,7 @@ class ProductoViewModel(
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]
-                        as MiNegocioApplication
-                ProductoViewModel(app.productoRepository)
+                ProductoViewModel(MiNegocioApplication.instancia.productoRepository)
             }
         }
     }

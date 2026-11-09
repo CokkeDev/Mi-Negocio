@@ -37,9 +37,9 @@ class ListaProductosViewModel(
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]
-                        as MiNegocioApplication
-                ListaProductosViewModel(app.productoRepository)
+                // Se pide el repositorio a la Application guardada en "instancia".
+                // (Navigation 3 no entrega APPLICATION_KEY, por eso no se usa this[...]).
+                ListaProductosViewModel(MiNegocioApplication.instancia.productoRepository)
             }
         }
     }
