@@ -6,19 +6,24 @@ import cl.miproyecto.minegocio.data.local.dao.ProductoDao
 import cl.miproyecto.minegocio.data.local.entity.ProductoEntity
 import androidx.room.Room
 import android.content.Context
+import androidx.room.AutoMigration
+import cl.miproyecto.minegocio.data.local.entity.LoteEntity
 
 // Esta clase ES la base de datos de la app.
 // Une las tablas (entidades) con sus consultas (DAO).
 @Database(
     // Lista de tablas que tiene la base de datos.
     // Cuando crees Lote, Venta, etc., se agregan aquí separadas por comas.
-    entities = [ProductoEntity::class],
+    entities = [ProductoEntity::class, LoteEntity::class],
     // Versión de la estructura de la base de datos.
     // Si cambias una tabla (por ejemplo, agregas una columna), hay que subirla a 2, 3...
-    version = 1,
+    version = 2,
     // Guarda un archivo con la forma de las tablas en app/schemas.
     // Sirve para poder actualizar la base de datos sin perder los datos del usuario.
     exportSchema = true,
+    autoMigrations = [
+        AutoMigration(from =1, to = 2),
+    ],
 )
 // "abstract" significa que la clase no está completa:
 // Room la completa sola (MiNegocioDatabase_Impl) al compilar.

@@ -1,0 +1,162 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "a46c384bd522bf80c578051d614bd5e3",
+    "entities": [
+      {
+        "tableName": "producto",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id_producto` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sku` TEXT, `nombre` TEXT NOT NULL, `nombre_normalizado` TEXT NOT NULL, `URL_imagen` TEXT, `precio_venta` INTEGER NOT NULL, `activo` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "idProducto",
+            "columnName": "id_producto",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sku",
+            "columnName": "sku",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombreNormalizado",
+            "columnName": "nombre_normalizado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "urlImagen",
+            "columnName": "URL_imagen",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "precioVenta",
+            "columnName": "precio_venta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activo",
+            "columnName": "activo",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id_producto"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_producto_sku",
+            "unique": true,
+            "columnNames": [
+              "sku"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_producto_sku` ON `${TABLE_NAME}` (`sku`)"
+          },
+          {
+            "name": "index_producto_nombre_normalizado",
+            "unique": true,
+            "columnNames": [
+              "nombre_normalizado"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_producto_nombre_normalizado` ON `${TABLE_NAME}` (`nombre_normalizado`)"
+          }
+        ]
+      },
+      {
+        "tableName": "lote",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id_lote` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `id_producto` INTEGER NOT NULL, `precio_compra` INTEGER NOT NULL, `fecha_ingreso` INTEGER NOT NULL, `fecha_vencimiento` INTEGER, `unidades_iniciales` INTEGER NOT NULL, `unidades_disponibles` INTEGER NOT NULL, FOREIGN KEY(`id_producto`) REFERENCES `producto`(`id_producto`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "idLote",
+            "columnName": "id_lote",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idProducto",
+            "columnName": "id_producto",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "precioCompra",
+            "columnName": "precio_compra",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaIngreso",
+            "columnName": "fecha_ingreso",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaVencimiento",
+            "columnName": "fecha_vencimiento",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "unidadesIniciales",
+            "columnName": "unidades_iniciales",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unidadesDisponibles",
+            "columnName": "unidades_disponibles",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id_lote"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_lote_id_producto",
+            "unique": false,
+            "columnNames": [
+              "id_producto"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_lote_id_producto` ON `${TABLE_NAME}` (`id_producto`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "producto",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "id_producto"
+            ],
+            "referencedColumns": [
+              "id_producto"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a46c384bd522bf80c578051d614bd5e3')"
+    ]
+  }
+}
