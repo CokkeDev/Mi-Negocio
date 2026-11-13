@@ -7,6 +7,7 @@ import cl.miproyecto.minegocio.data.local.entity.ProductoEntity
 import androidx.room.Room
 import android.content.Context
 import androidx.room.AutoMigration
+import cl.miproyecto.minegocio.data.local.dao.LoteDao
 import cl.miproyecto.minegocio.data.local.entity.LoteEntity
 
 // Esta clase ES la base de datos de la app.
@@ -37,6 +38,9 @@ abstract class MiNegocioDatabase : RoomDatabase() {
     // Entrega el DAO de productos. El resto de la app lo usa así:
     // database.productoDao().insertar(...)
     abstract fun productoDao(): ProductoDao
+
+    // Entrega el DAO de lotes.
+    abstract fun loteDao(): LoteDao
 
 
     // "companion object": lo que está aquí adentro se usa directo con el nombre de la clase,
