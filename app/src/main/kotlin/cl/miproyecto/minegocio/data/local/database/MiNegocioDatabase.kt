@@ -21,8 +21,14 @@ import cl.miproyecto.minegocio.data.local.entity.LoteEntity
     // Guarda un archivo con la forma de las tablas en app/schemas.
     // Sirve para poder actualizar la base de datos sin perder los datos del usuario.
     exportSchema = true,
+    // MIGRACIONES: cómo pasar de una versión a otra SIN perder los datos del usuario.
+    // AutoMigration le dice a Room: "escribe tú el cambio de la versión 1 a la 2".
+    // Room compara app/schemas/.../1.json con la estructura nueva y genera
+    // solo el "CREATE TABLE lote". Los productos guardados no se tocan.
+    // Por eso es importante exportSchema = true y subir los .json a git.
+    // NUNCA usar fallbackToDestructiveMigration: borraría todos los datos.
     autoMigrations = [
-        AutoMigration(from =1, to = 2),
+        AutoMigration(from = 1, to = 2),
     ],
 )
 // "abstract" significa que la clase no está completa:
