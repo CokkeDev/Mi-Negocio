@@ -1,93 +1,156 @@
-# Mi-Negocio
-Crear un aplicación la cual pueda usarse de manera offline para mantener stock, ventas ganancias e historial del negocio de manera simple para el usuario.
+<div align="center">
 
-# Stack tecnológico
+<img src="docs/icono.svg" width="128" alt="Ícono de Mi Negocio">
 
-- Kotlin lenguaje de desarrollo, este esta enfocado en Java pero para dispositivos Android.
-- Sql lite para la base de datos.
+# Mi Negocio
 
-# Arquitectura del proyecto
+**Stock, ventas y ganancias de tu kiosko, en tu teléfono y sin internet.**
 
-El proyecto utilizara la arquitectura de Modelo vista vista modelo para separar la interfaz de usuario de la lógica de negocio y de presentación.
+Una app Android simple para llevar el inventario por lotes, vender escaneando códigos de barras
+y saber cuánto ganas de verdad, sin crear cuentas y sin que tus datos salgan del teléfono.
 
-las carpetas que tiene el proyecto esta enfocada de la siguiente manera:
+![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin&logoColor=white)
+![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)
+![Room](https://img.shields.io/badge/Room-SQLite-00506E)
+![Android](https://img.shields.io/badge/Android-7.0%2B-3DDC84?logo=android&logoColor=white)
+![Offline](https://img.shields.io/badge/funciona-sin%20internet-FFB951)
+![Tests](https://img.shields.io/badge/tests-43%20pasando-2E7D32)
 
-- Core: funcionalidades comunes a toda la aplicación que no representan específicamente las reglas del negocio.
-- Presentation: Aqui se agrega todo lo que va relacionado a la interfaz que el usuario visualizaria en la aplicación.
-- Domain: Qué es lo que debe de hacer el negocio, lo que define como funciona.
-- Data: cómo obtengo y guardo los datos.
+</div>
 
-# El MVP de la apliación
+---
 
-1.- Identificar el problema
+## 📱 Capturas
 
-2.- Seleccionar las funciones escenciales
+| Inicio | Venta | Detalle del producto |
+|:---:|:---:|:---:|
+| <img src="docs/capturas/inicio.png" width="230" alt="Pantalla de inicio con ventas y ganancia del día"> | <img src="docs/capturas/venta.png" width="230" alt="Venta con escáner de códigos y boleta"> | <img src="docs/capturas/detalle.png" width="230" alt="Detalle del producto con sus lotes"> |
+| **Reportes** | **Gastos** | **Tema oscuro** |
+| <img src="docs/capturas/reportes.png" width="230" alt="Reportes con ganancia neta y gráfico por mes"> | <img src="docs/capturas/gastos.png" width="230" alt="Gastos del mes por categoría"> | <img src="docs/capturas/tema-oscuro.png" width="230" alt="Pantalla de inicio en tema oscuro"> |
 
-No existe una aplicación simple donde se pueda mantener un registro del stock del kiosko y registrar las ganancias que se obtienen de manera que no tenga que registrar con una cuenta y que se mantenga todo de manera offline, las funciones que tiene la aplicación son:
+## 💡 El problema
 
-Poder agregar productos que se venderan en el kiosko donde el usuario podra agregar, foto del producto, Precio de venta, Precio de compra, Nombre del producto, Fecha de vencimiento y stock disponible.
+Las apps de inventario suelen pedir una cuenta, una suscripción o conexión permanente.
+Un kiosko de barrio solo necesita algo rápido: **anotar lo que compra, cobrar lo que vende y saber si al final del mes ganó o perdió**.
+Mi Negocio hace exactamente eso y todo queda guardado en el propio teléfono.
 
-Eliminar productos, el usuario podra eliminar los porductos que agrego en caso de haber un error.
+## ✨ Funcionalidades
 
-Vender producto, cuando seleciona la opción de vender se abrira una ventana donde se seleccionara la cantidad vendida y eso se le restara al stock, se le sumara la ganancias.
+- **Productos**: nombre, precio de venta, código de barras (escaneado con la cámara) y foto opcional. Avisa si el producto ya existe y permite reactivar los eliminados.
+- **Lotes con vencimiento**: cada compra se ingresa como un lote con su precio de compra, unidades y fecha de vencimiento.
+- **Ventas con escáner**: apuntas la cámara al código y el producto se suma a la boleta. Los productos sin código se eligen de una lista.
+- **Descuento FEFO**: al vender, el stock sale primero del lote que vence antes (*First Expired, First Out*).
+- **Ventas seguras**: cada venta se guarda en una transacción. Si falta stock, no queda nada a medias.
+- **Merma**: registra lo vencido, dañado o perdido, valorizado a precio de compra.
+- **Gastos**: luz, arriendo, transporte, insumos… agrupados por categoría y por semana.
+- **Reportes**: ganancia neta (ventas − costo − gastos − merma), gráfico de los últimos 6 meses y productos más vendidos.
+- **Alertas**: productos por vencer y sin stock, con días de aviso configurables.
+- **Respaldo**: exporta e importa la base de datos a un archivo (Descargas, Drive, pendrive…). Revisa que el archivo sea un respaldo válido antes de restaurarlo.
+- **Tema claro y oscuro**, según el sistema o a elección.
 
-Merma, opción en caso de que el produto no se haya podido vender y se hecha a perder.
+## 🔒 Privacidad
 
-ver registros de ganacias, se mostrara los productos más vendidos, con las ganancias y los gastos realizados y los reportes de los meses con sus graficos representando los meses con mas ganancias y perdidas.
+- **Sin cuentas y sin internet**: la app ni siquiera tiene el permiso de internet (`INTERNET` se quita del manifiesto).
+- El lector de códigos usa el modelo de ML Kit **incluido en la app**, así que funciona sin conexión.
+- El único permiso que pide es la **cámara**, para escanear códigos y sacar fotos de productos.
+- Todos los datos viven en una base SQLite dentro del almacenamiento privado de la app.
 
-# Entindad relación BD
+## 🛠️ Tecnologías
+
+| Área | Herramienta |
+|---|---|
+| Lenguaje | Kotlin 2.3 |
+| Interfaz | Jetpack Compose · Material 3 |
+| Navegación | Navigation 3 |
+| Base de datos | Room 2.8 (SQLite) con migraciones automáticas |
+| Cámara y escáner | CameraX · ML Kit Barcode Scanning (modelo incluido) |
+| Arquitectura | MVVM · repositorios · inyección de dependencias manual |
+| Tests | JUnit 4 · Robolectric · kotlinx-coroutines-test |
+
+## 🧱 Arquitectura
+
+El proyecto separa la interfaz, las reglas del negocio y el acceso a datos (MVVM en capas):
+
+```mermaid
+flowchart LR
+    UI["presentation<br/>Pantallas Compose + ViewModels"] --> D["domain<br/>Modelos, reglas (FEFO) e interfaces"]
+    UI --> Core["core<br/>Componentes UI, formato, fechas"]
+    Data["data<br/>Room, DAOs, repositorios, respaldo"] --> D
+    Data --> DB[("SQLite")]
+```
+
+```
+app/src/main/kotlin/cl/miproyecto/minegocio/
+├── core/           # Componentes de UI reutilizables, íconos, escáner, utilidades
+├── data/           # Entidades y DAOs de Room, repositorios, preferencias y respaldo
+├── domain/         # Modelos del negocio, interfaces de repositorios y casos de uso (FEFO)
+├── presentation/   # Pantallas y ViewModels: productos, lotes, ventas, merma, gastos, reportes...
+└── ui/theme/       # Colores, tipografía y tema claro/oscuro
+```
+
+## 🗃️ Modelo de datos
+
 ```mermaid
 classDiagram
   class Producto {
-    +Int Id_Producto PK
-    +string sku UK 
+    +Int id_producto PK
+    +String sku UK
     +String nombre
-    +String nombre_normalizado
-    +string URL_imagen
+    +String nombre_normalizado UK
+    +String URL_imagen
     +Int precio_venta
-    +Int activo
+    +Boolean activo
   }
-
   class Lote {
     +Int id_lote PK
-    +Int id_Producto FK
+    +Int id_producto FK
     +Int precio_compra
     +Date fecha_ingreso
-    +Date Fecha_Vencimiento nullable
-    +Int Unidades_Iniciales
-    +Int unidades_Disponibles
+    +Date fecha_vencimiento nullable
+    +Int unidades_iniciales
+    +Int unidades_disponibles
   }
-
   class Perdida {
-    +Int Id_perdida PK
-    +Int Id_Lote FK
-    +Int Cantidad
-    +String Motivo
-    +String Nota (opcional)
-    +Date Fecha
+    +Int id_perdida PK
+    +Int id_lote FK
+    +Int cantidad
+    +String motivo
+    +String nota nullable
+    +Date fecha
   }
-
   class Venta {
-    +Int Id_venta PK
-    +Date Fecha
-    +Int Total
+    +Int id_venta PK
+    +Date fecha
+    +Int total
   }
-
-    class Detalles_Venta{
-    +Int Id_detalle PK
-    +Int Id_venta FK
-    +Int Id_Lote FK
-    +Int Cantidad
-    +Int Precio_Unitario
+  class DetalleVenta {
+    +Int id_detalle PK
+    +Int id_venta FK
+    +Int id_lote FK
+    +Int cantidad
+    +Int precio_unitario
+  }
+  class Gasto {
+    +Int id_gasto PK
+    +String descripcion
+    +Int monto
+    +String categoria
+    +Date fecha
   }
 
   Producto "1" --> "*" Lote : tiene
-  Lote "1" *-- "*" Perdida : Registra
-  Lote "1" --> "*" Detalles_Venta : Se vende en
-  Venta "1" --> "*" Detalles_Venta : Contiene
+  Lote "1" --> "*" Perdida : registra
+  Lote "1" --> "*" DetalleVenta : se vende en
+  Venta "1" --> "*" DetalleVenta : contiene
 ```
 
-# Registro de producto (MVVM)
+> La ganancia se calcula con el **precio de compra del lote** del que salió cada unidad,
+> por eso cada línea de venta guarda el lote (`id_lote`) y no solo el producto.
+
+## 🔄 Flujos principales
+
+<details>
+<summary><b>Registro de producto</b></summary>
 
 ```mermaid
 sequenceDiagram
@@ -107,8 +170,7 @@ sequenceDiagram
     end
     Usuario->>Screen: Presionar Agregar
     Screen->>VM: AgregarProducto(producto)
-    VM->>VM: Validar datos
-    VM->>VM: Normalizar nombre
+    VM->>VM: Validar datos y normalizar nombre
     VM->>Repo: BuscarDuplicado(nombreNormalizado, sku)
     Repo->>DAO: BuscarDuplicado(nombreNormalizado, sku)
     DAO->>DB: SELECT producto WHERE nombre_normalizado = ? OR sku = ?
@@ -118,76 +180,58 @@ sequenceDiagram
 
     alt Existe y está activo
         VM-->>Screen: Error: producto duplicado
-        Screen-->>Usuario: No se pudo agregar, el producto ya existe
+        Screen-->>Usuario: El producto ya existe
     else Existe pero está eliminado
         VM-->>Screen: Ofrecer reactivar
-        Screen-->>Usuario: Desea reactivar el producto
-        alt Usuario acepta
-            Usuario->>Screen: Reactivar
-            Screen->>VM: ReactivarProducto(idProducto)
-            VM->>Repo: Reactivar(idProducto)
-            Repo->>DAO: Reactivar(idProducto)
-            DAO->>DB: UPDATE producto SET activo = 1
-            DB-->>DAO: OK
-            DAO-->>Repo: Confirmación
-            Repo-->>VM: Producto reactivado
-            VM-->>Screen: Actualizar estado
-            Screen-->>Usuario: Producto reactivado exitosamente
-        else Usuario cancela
-            Screen-->>Usuario: Operación cancelada
-        end
+        Usuario->>Screen: Reactivar
+        Screen->>VM: ReactivarProducto(idProducto)
+        VM->>Repo: Reactivar(idProducto)
+        Repo->>DAO: UPDATE producto SET activo = 1
+        Screen-->>Usuario: Producto reactivado
     else No existe
         VM->>Repo: InsertarProducto(producto)
-        Repo->>DAO: InsertarProducto(producto)
-        DAO->>DB: INSERT INTO producto
-        DB-->>DAO: id_producto generado
-        DAO-->>Repo: Confirmación
-        Repo-->>VM: Producto creado
+        Repo->>DAO: INSERT INTO producto
+        DAO-->>Repo: id_producto generado
         VM-->>Screen: Actualizar estado
-        Screen-->>Usuario: Producto agregado exitosamente
+        Screen-->>Usuario: Producto agregado
         Note over Screen,Usuario: Se muestra en gris porque aún no tiene lotes
     end
 ```
+</details>
 
-# Ingreso de lotes (MVVM)
+<details>
+<summary><b>Ingreso de lotes</b></summary>
 
 ```mermaid
 sequenceDiagram
     actor Usuario
-    participant View as HomeScreen
-    participant VM as ProductoViewModel
+    participant View as AgregarLoteScreen
+    participant VM as AgregarLoteViewModel
     participant Repo as LoteRepository
     participant DAO as LoteDAO
     participant DB as SQLite
 
-    Usuario->>View: SeleccionarProducto(idProducto o SKU)
-    View->>VM: SeleccionarProducto(idProducto)
-    VM-->>View: Mostrar información del producto
-
-    Usuario->>View: Ingresar datos del lote
-    View->>VM: AgregarLote(idProducto, PrecioCompra, Unidades, FechaVencimiento)
-
-    VM->>VM: Validar datos del lote
-    Note over VM: unidades mayor a 0, precio mayor o igual a 0, vencimiento opcional
+    Usuario->>View: Ingresar precio de compra, unidades y vencimiento
+    View->>VM: AgregarLote(idProducto, precioCompra, unidades, vencimiento)
+    VM->>VM: Validar (unidades > 0, precio >= 0, vencimiento opcional)
 
     alt Datos inválidos
-        VM-->>View: Error: datos inválidos
-        View-->>Usuario: ERROR: revise los datos ingresados
+        VM-->>View: Error de validación
+        View-->>Usuario: Revise los datos ingresados
     else Datos válidos
-        VM->>VM: fechaIngreso = hoy
-        VM->>VM: unidadesDisponibles = unidadesIniciales
-        VM->>Repo: AlmacenarLote(lote)
+        VM->>Repo: AlmacenarLote(lote con fechaIngreso = hoy)
         Repo->>DAO: InsertarLote(lote)
-        DAO->>DB: INSERT Lote
+        DAO->>DB: INSERT INTO lote
         DB-->>DAO: id_lote generado
-        DAO-->>Repo: Confirmación
-        Repo-->>VM: Lote agregado exitosamente
         VM-->>View: Actualizar estado
-        View-->>Usuario: Lote agregado exitosamente
+        View-->>Usuario: Lote agregado
         Note over View,Usuario: El producto deja de verse gris porque ahora tiene stock
     end
 ```
-# Venta con escaneo de SKU (MVVM)
+</details>
+
+<details>
+<summary><b>Venta con escaneo y descuento FEFO</b></summary>
 
 ```mermaid
 sequenceDiagram
@@ -197,138 +241,148 @@ sequenceDiagram
     participant VM as VentaViewModel
     participant PRepo as ProductoRepository
     participant VRepo as VentaRepository
-    participant DAO as ProductoDAO / VentaDAO
     participant DB as SQLite
 
     Usuario->>View: Iniciar venta
-    View->>VM: IniciarVenta()
-    VM->>VM: Crear boleta vacía en memoria
     View->>Scanner: Activar cámara
-
     loop Por cada producto
         alt Producto con código
-            Usuario->>Scanner: Apuntar al código de barras
             Scanner->>View: Código detectado
             View->>VM: EscanearSku(codigo)
             VM->>PRepo: BuscarPorSku(codigo)
-            PRepo->>DAO: SELECT producto y stock WHERE sku = ?
         else Producto sin código
-            Usuario->>View: Tocar producto en el Home
+            Usuario->>View: Elegir de la lista
             View->>VM: AgregarProducto(idProducto)
-            VM->>PRepo: ObtenerConStock(idProducto)
-            PRepo->>DAO: SELECT producto y stock WHERE id = ?
         end
-        DAO->>DB: Consultar producto y SUM(unidades_disponibles)
-        DB-->>DAO: Resultado
-        DAO-->>PRepo: Producto y stock o null
         PRepo-->>VM: Producto y stock o null
-
-        alt Producto no encontrado
-            VM-->>View: Error: SKU no registrado
+        alt No encontrado
             View-->>Usuario: Ofrecer registrar el producto
-        else Stock = 0
-            VM-->>View: Error: sin stock
-            View-->>Usuario: Mostrar mensaje
-        else Producto válido
-            alt Ya está en la boleta
-                VM->>VM: Cantidad + 1 (máximo el stock disponible)
-            else Nuevo en la boleta
-                VM->>VM: Agregar línea con cantidad 1
-            end
-            VM->>VM: Recalcular total
-            VM-->>View: Actualizar boleta
-            View-->>Usuario: Producto agregado (vibración o sonido)
+        else Sin stock
+            View-->>Usuario: Mostrar aviso
+        else Válido
+            VM->>VM: Sumar a la boleta y recalcular total
+            View-->>Usuario: Producto agregado (sonido o vibración)
         end
     end
 
-    alt Venta aceptada
-        Usuario->>View: Aceptar boleta
-        View->>VM: ConfirmarVenta()
-        VM->>VRepo: RegistrarVenta(boleta)
-        VRepo->>DAO: Iniciar transacción
-        DAO->>DB: BEGIN
-        DAO->>DB: INSERT INTO venta
-        loop Por cada línea de la boleta
-            DAO->>DB: SELECT lotes con stock ORDER BY fecha_vencimiento IS NULL, fecha_vencimiento, fecha_ingreso
-            DB-->>DAO: Lotes disponibles
-            loop Hasta cubrir la cantidad
-                DAO->>DB: UPDATE lote SET unidades_disponibles = unidades_disponibles - n
-                DAO->>DB: INSERT INTO detalle_venta (id_lote, cantidad, precio_unitario)
-            end
+    Usuario->>View: Aceptar venta
+    View->>VM: ConfirmarVenta()
+    VM->>VRepo: RegistrarVenta(boleta)
+    VRepo->>DB: BEGIN
+    VRepo->>DB: INSERT INTO venta
+    loop Por cada línea
+        VRepo->>DB: Lotes con stock ORDER BY vencimiento (FEFO)
+        loop Hasta cubrir la cantidad
+            VRepo->>DB: UPDATE lote SET unidades_disponibles = unidades_disponibles - n
+            VRepo->>DB: INSERT INTO detalle_venta
         end
-
-        alt Todo correcto
-            DAO->>DB: COMMIT
-            DAO-->>VRepo: Venta registrada
-            VRepo-->>VM: Éxito
-            VM->>VM: Limpiar boleta
-            VM-->>View: Actualizar stock en Home
-            View-->>Usuario: Venta realizada
-        else Error (stock insuficiente o fallo de BD)
-            DAO->>DB: ROLLBACK
-            DAO-->>VRepo: Error
-            VRepo-->>VM: Error
-            VM-->>View: Error al registrar
-            View-->>Usuario: No se pudo registrar la venta
-        end
-    else Venta rechazada
-        Usuario->>View: Rechazar boleta
-        View->>VM: CancelarVenta()
-        VM->>VM: Descartar boleta
-        VM-->>View: Volver al Home
-        View-->>Usuario: Venta cancelada
+    end
+    alt Todo correcto
+        VRepo->>DB: COMMIT
+        View-->>Usuario: Venta realizada
+    else Stock insuficiente o error
+        VRepo->>DB: ROLLBACK
+        View-->>Usuario: No se pudo registrar la venta
     end
 ```
+</details>
 
-# Merma (MVVM)
+<details>
+<summary><b>Merma</b></summary>
 
 ```mermaid
 sequenceDiagram
     actor Usuario
     participant View as MermaScreen
     participant VM as MermaViewModel
-    participant LRepo as LoteRepository
-    participant PRepo as PerdidaRepository
-    participant DAO as LoteDAO / PerdidaDAO
+    participant Repo as MermaRepository
     participant DB as SQLite
 
-    Usuario->>View: Seleccionar producto
     View->>VM: CargarLotes(idProducto)
-    VM->>LRepo: ObtenerLotesConStock(idProducto)
-    LRepo->>DAO: ObtenerLotesConStock(idProducto)
-    DAO->>DB: SELECT lotes WHERE unidades_disponibles mayor a 0
-    DB-->>DAO: Lotes
-    DAO-->>LRepo: Lotes
-    LRepo-->>VM: Lotes
-    VM-->>View: Mostrar lotes (vencimiento y unidades)
-
+    VM-->>View: Lotes con stock (vencimiento y unidades)
     Usuario->>View: Elegir lote, cantidad, motivo y nota
     View->>VM: RegistrarMerma(idLote, cantidad, motivo, nota)
-    VM->>VM: Validar datos (cantidad mayor a 0 y menor o igual a las disponibles)
-
+    VM->>VM: Validar (0 < cantidad <= disponibles)
     alt Datos inválidos
-        VM-->>View: Error de validación
-        View-->>Usuario: ERROR: revise los datos ingresados
+        View-->>Usuario: Revise los datos ingresados
     else Datos válidos
-        VM->>PRepo: RegistrarPerdida(perdida)
-        PRepo->>DAO: RegistrarPerdida(perdida)
-        DAO->>DB: BEGIN
-        DAO->>DB: UPDATE lote SET unidades_disponibles = unidades_disponibles - cantidad
-        DAO->>DB: INSERT INTO perdida (id_lote, cantidad, motivo, nota, fecha)
-
+        VM->>Repo: RegistrarMerma(...)
+        Repo->>DB: BEGIN
+        Repo->>DB: UPDATE lote SET unidades_disponibles = unidades_disponibles - cantidad
+        Repo->>DB: INSERT INTO perdida
         alt Todo correcto
-            DAO->>DB: COMMIT
-            DAO-->>PRepo: Confirmación
-            PRepo-->>VM: Merma registrada
-            VM-->>View: Actualizar estado
-            View-->>Usuario: Merma registrada exitosamente
-        else Error (CHECK de stock o fallo de BD)
-            DAO->>DB: ROLLBACK
-            DAO-->>PRepo: Error
-            PRepo-->>VM: Error
-            VM-->>View: Error al registrar
+            Repo->>DB: COMMIT
+            View-->>Usuario: Merma registrada
+        else Error
+            Repo->>DB: ROLLBACK
             View-->>Usuario: No se pudo registrar la merma
         end
     end
 ```
+</details>
 
+## 🚀 Cómo compilar
+
+**Requisitos:** Android Studio (o JDK 17 y Android SDK 37) y un teléfono o emulador con Android 7.0 o superior.
+
+```bash
+git clone https://github.com/CokkeDev/Mi-Negocio.git
+cd Mi-Negocio
+./gradlew assembleDebug      # APK de prueba en app/build/outputs/apk/debug/
+./gradlew testDebugUnitTest  # Ejecuta los tests
+```
+
+<details>
+<summary><b>Generar un APK release firmado</b></summary>
+
+1. Crea tu llave de firma (guárdala bien: sin ella no podrás actualizar la app instalada):
+
+   ```bash
+   keytool -genkeypair -v -keystore mi-negocio.jks -alias minegocio -keyalg RSA -keysize 2048 -validity 10000
+   ```
+
+2. Crea `keystore.properties` en la raíz del proyecto:
+
+   ```properties
+   storeFile=mi-negocio.jks
+   storePassword=tu_contraseña
+   keyAlias=minegocio
+   keyPassword=tu_contraseña
+   ```
+
+3. Compila:
+
+   ```bash
+   ./gradlew assembleRelease   # app/build/outputs/apk/release/app-release.apk
+   ```
+
+`keystore.properties` y los archivos `.jks` están en `.gitignore` y **nunca deben subirse al repositorio**.
+</details>
+
+## 🧪 Tests
+
+43 tests locales (se ejecutan en el computador con Robolectric, sin emulador):
+
+| Área | Qué se verifica |
+|---|---|
+| Ventas | Descuento FEFO, total y ganancia por lote, rollback si falta stock |
+| Merma y gastos | Descuento del lote, costo de la pérdida, listado y suma por categoría |
+| Reportes | Ganancia neta, rangos de fechas, más vendidos, últimos 6 meses |
+| Productos | Stock por lotes, próximo vencimiento, eliminar/reactivar, códigos únicos |
+| Migraciones | Una base de datos de versiones anteriores (1 y 2) sube a la 3 sin perder datos |
+| Respaldo | Solo acepta respaldos válidos de Mi Negocio |
+| Utilidades | Reparto FEFO, formato de pesos, normalización de nombres |
+
+## 🗺️ Próximos pasos
+
+- [ ] Incluir las fotos de los productos en el archivo de respaldo.
+- [ ] Exportar reportes a PDF o planilla.
+- [ ] Publicar en Google Play.
+
+---
+
+<div align="center">
+
+Hecho por [CokkeDev](https://github.com/CokkeDev)
+
+</div>
