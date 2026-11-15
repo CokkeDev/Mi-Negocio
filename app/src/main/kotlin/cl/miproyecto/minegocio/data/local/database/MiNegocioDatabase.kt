@@ -9,16 +9,31 @@ import android.content.Context
 import androidx.room.AutoMigration
 import cl.miproyecto.minegocio.data.local.dao.LoteDao
 import cl.miproyecto.minegocio.data.local.entity.LoteEntity
+import cl.miproyecto.minegocio.data.local.dao.GastoDao
+import cl.miproyecto.minegocio.data.local.dao.PerdidaDao
+import cl.miproyecto.minegocio.data.local.dao.ReporteDao
+import cl.miproyecto.minegocio.data.local.dao.VentaDao
+import cl.miproyecto.minegocio.data.local.entity.DetalleVentaEntity
+import cl.miproyecto.minegocio.data.local.entity.GastoEntity
+import cl.miproyecto.minegocio.data.local.entity.PerdidaEntity
+import cl.miproyecto.minegocio.data.local.entity.VentaEntity
 
 // Esta clase ES la base de datos de la app.
 // Une las tablas (entidades) con sus consultas (DAO).
 @Database(
     // Lista de tablas que tiene la base de datos.
     // Cuando crees Lote, Venta, etc., se agregan aquí separadas por comas.
-    entities = [ProductoEntity::class, LoteEntity::class],
+    entities = [
+        ProductoEntity::class,
+        LoteEntity::class,
+        PerdidaEntity::class,
+        VentaEntity::class,
+        DetalleVentaEntity::class,
+        GastoEntity::class,
+    ],
     // Versión de la estructura de la base de datos.
     // Si cambias una tabla (por ejemplo, agregas una columna), hay que subirla a 2, 3...
-    version = 2,
+    version = 3,
     // Guarda un archivo con la forma de las tablas en app/schemas.
     // Sirve para poder actualizar la base de datos sin perder los datos del usuario.
     exportSchema = true,
@@ -30,6 +45,8 @@ import cl.miproyecto.minegocio.data.local.entity.LoteEntity
     // NUNCA usar fallbackToDestructiveMigration: borraría todos los datos.
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
+        // Versión 3: se agregan las tablas perdida, venta, detalle_venta y gasto.
+        AutoMigration(from = 2, to = 3),
     ],
 )
 // "abstract" significa que la clase no está completa:
@@ -42,6 +59,14 @@ abstract class MiNegocioDatabase : RoomDatabase() {
     // Entrega el DAO de lotes.
     abstract fun loteDao(): LoteDao
 
+    abstract fun ventaDao(): VentaDao
+
+    abstract fun perdidaDao(): PerdidaDao
+
+    abstract fun gastoDao(): GastoDao
+
+    abstract fun reporteDao(): ReporteDao
+
 
     // "companion object": lo que está aquí adentro se usa directo con el nombre de la clase,
     // sin crear nada antes: MiNegocioDatabase.getInstance(context)
@@ -50,6 +75,9 @@ abstract class MiNegocioDatabase : RoomDatabase() {
         // Empieza en null porque al abrir la app todavía no se ha creado.
         // "private": solo esta clase puede cambiarla.
         // "@Volatile": si una parte de la app la crea, todas las demás lo ven al instante.
+        // Nombre del archivo de la base de datos (se usa también en los respaldos).
+        const val NOMBRE_ARCHIVO = "mi_negocio.db"
+
         @Volatile
         private var INSTANCE: MiNegocioDatabase? = null
 
@@ -71,7 +99,7 @@ abstract class MiNegocioDatabase : RoomDatabase() {
                     context.applicationContext, MiNegocioDatabase::class.java,
                     // Nombre del archivo en el celular. No cambiarlo nunca,
                     // o la app crearía una base de datos nueva y vacía.
-                    "mi_negocio.db",
+                    NOMBRE_ARCHIVO,
                     // build() crea la base de datos y also { } la guarda en INSTANCE
                     // para entregarla las próximas veces.
                 ).build().also { INSTANCE = it }

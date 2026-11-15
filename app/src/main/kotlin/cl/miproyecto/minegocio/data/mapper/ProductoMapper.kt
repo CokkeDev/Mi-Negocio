@@ -15,6 +15,8 @@ package cl.miproyecto.minegocio.data.mapper
 // "data" puede importar cosas de "domain", pero nunca al revés.
 import cl.miproyecto.minegocio.data.local.entity.ProductoEntity
 import cl.miproyecto.minegocio.domain.model.Producto
+import cl.miproyecto.minegocio.domain.model.ProductoResumen
+import cl.miproyecto.minegocio.data.local.relacion.ProductoConStock
 
 // DE LA BASE DE DATOS -> A LA APP
 // Se usa al LEER: cuando Room entrega un ProductoEntity, se convierte en Producto.
@@ -58,3 +60,13 @@ fun Producto.toEntity(): ProductoEntity = ProductoEntity(
     precioVenta = precioVenta,
     activo = activo,
 )
+
+// Producto con stock (resultado de una consulta con subconsultas) -> modelo de la app.
+fun ProductoConStock.toDomain(): ProductoResumen =
+    ProductoResumen(
+        producto = producto.toDomain(),
+        stock = stock,
+        lotesConStock = lotesConStock,
+        totalLotes = totalLotes,
+        proximoVencimiento = proximoVencimiento,
+    )

@@ -32,4 +32,26 @@ interface LoteDao {
         """
     )
     fun obtenerStock(idProducto: Long): Flow<Int>
+
+    // 4) Igual que la 2), pero una sola vez (sin Flow).
+    // Se usa DENTRO de una transacción de venta para repartir las unidades.
+    @Query(
+        """
+        SELECT * FROM lote
+        WHERE id_producto = :idProducto AND unidades_disponibles > 0
+        ORDER BY fecha_vencimiento IS NULL, fecha_vencimiento, fecha_ingreso
+        """
+    )
+    suspend fun obtenerPorProductoUnaVez(idProducto: Long): List<LoteEntity>
+
+    // 5) Resta unidades a un lote.
+    // El "AND unidades_disponibles >= :cantidad" es una protección:
+    // si no alcanzan, no cambia nada y devuelve 0 filas.
+    @Query(
+        """
+        UPDATE lote SET unidades_disponibles = unidades_disponibles - :cantidad
+        WHERE id_lote = :idLote AND unidades_disponibles >= :cantidad
+        """
+    )
+    suspend fun descontar(idLote: Long, cantidad: Int): Int
 }

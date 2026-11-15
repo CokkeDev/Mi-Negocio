@@ -4,7 +4,23 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import cl.miproyecto.minegocio.data.local.entity.ProductoEntity
+import cl.miproyecto.minegocio.data.local.relacion.ProductoConStock
 import kotlinx.coroutines.flow.Flow
+
+// Parte común de las consultas que traen un producto con los datos de sus lotes.
+// Cada "(SELECT ...)" es una subconsulta que calcula un dato por cada producto "p".
+// "const val": un texto fijo que se puede usar dentro de @Query.
+private const val SELECT_CON_STOCK = """
+    SELECT p.*,
+        COALESCE((SELECT SUM(l.unidades_disponibles) FROM lote l
+                  WHERE l.id_producto = p.id_producto), 0) AS stock,
+        (SELECT COUNT(*) FROM lote l
+         WHERE l.id_producto = p.id_producto AND l.unidades_disponibles > 0) AS lotes_con_stock,
+        (SELECT COUNT(*) FROM lote l WHERE l.id_producto = p.id_producto) AS total_lotes,
+        (SELECT MIN(l.fecha_vencimiento) FROM lote l
+         WHERE l.id_producto = p.id_producto AND l.unidades_disponibles > 0) AS proximo_vencimiento
+    FROM producto p
+"""
 
 // DAO = "Data Access Object" (objeto de acceso a datos).
 // Aquí se escriben todas las consultas a la tabla "producto":
@@ -52,4 +68,19 @@ interface ProductoDao {
     @Query ("SELECT * FROM producto WHERE activo = 1 ORDER BY nombre")
     fun obtenerActivos(): Flow<List<ProductoEntity>>
 
+    // Los productos eliminados (activo = 0), para poder reactivarlos desde Configuración.
+    @Query("SELECT * FROM producto WHERE activo = 0 ORDER BY nombre COLLATE NOCASE")
+    fun obtenerEliminados(): Flow<List<ProductoEntity>>
+
+    // Productos activos con su stock. "COLLATE NOCASE": ordena sin importar mayúsculas.
+    @Query("$SELECT_CON_STOCK WHERE p.activo = 1 ORDER BY p.nombre COLLATE NOCASE")
+    fun obtenerConStock(): Flow<List<ProductoConStock>>
+
+    // Un producto con su stock (para la pantalla de detalle).
+    @Query("$SELECT_CON_STOCK WHERE p.id_producto = :idProducto")
+    fun obtenerConStockPorId(idProducto: Long): Flow<ProductoConStock?>
+
+    // Busca un producto activo por su código de barras (para vender escaneando).
+    @Query("$SELECT_CON_STOCK WHERE p.activo = 1 AND p.sku = :sku LIMIT 1")
+    suspend fun buscarPorSku(sku: String): ProductoConStock?
 }

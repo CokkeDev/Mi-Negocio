@@ -1,38 +1,37 @@
 package cl.miproyecto.minegocio.domain.repository
 
-// Solo se importa el modelo "limpio" y Flow (que es Kotlin puro, no Android).
-// Aquí NUNCA se importa nada de androidx ni de la capa data (ProductoEntity, DAO...).
 import cl.miproyecto.minegocio.domain.model.Producto
+import cl.miproyecto.minegocio.domain.model.ProductoResumen
 import kotlinx.coroutines.flow.Flow
 
-// REPOSITORIO = el "mesero" de los productos.
-// El resto de la app (ViewModel) le pide los datos a él,
-// sin saber si vienen de Room, de un archivo o de internet.
-//
-// Es una "interface": una lista de PROMESAS. Dice QUÉ se puede hacer,
-// pero no CÓMO. Por eso las funciones no tienen { } con código.
-// El "cómo" lo escribe ProductoRepositoryImpl (en la capa data),
-// que usa el DAO y el mapper.
-//
-// Diferencia con el DAO: aquí se trabaja con Producto, nunca con ProductoEntity.
+// Lo que la app puede hacer con los productos (el "menú").
+// Solo usa modelos de domain, nunca entidades de Room.
 interface ProductoRepository {
 
     // Busca un producto con el mismo nombre normalizado o el mismo código de barras.
-    // Devuelve el producto encontrado, o null si no hay ninguno.
     suspend fun buscarDuplicado(nombreNormalizado: String, sku: String?): Producto?
 
-    // Guarda un producto nuevo y devuelve el id que le asignó la base de datos.
+    // Guarda un producto nuevo y devuelve su id.
     suspend fun insertar(producto: Producto): Long
 
-    // Vuelve a activar un producto eliminado.
-    // Devuelve cuántos productos se modificaron (1 = ok, 0 = no existe).
+    // Vuelve a activar un producto eliminado. Devuelve las filas cambiadas.
     suspend fun reactivar(idProducto: Long): Int
 
-    // Elimina un producto (lo marca como inactivo, no lo borra).
-    // Devuelve cuántos productos se modificaron (1 = ok, 0 = no existe).
+    // Elimina (lógicamente) un producto. Devuelve las filas cambiadas.
     suspend fun eliminar(idProducto: Long): Int
 
-    // Entrega la lista de productos activos y avisa sola cada vez que cambia.
-    // No lleva "suspend" porque devuelve un Flow.
+    // Los productos activos.
     fun obtenerActivos(): Flow<List<Producto>>
+
+    // Los productos eliminados (para reactivarlos).
+    fun obtenerEliminados(): Flow<List<Producto>>
+
+    // Los productos activos con su stock, lotes y vencimiento más cercano.
+    fun obtenerConStock(): Flow<List<ProductoResumen>>
+
+    // Un producto con su stock.
+    fun obtenerResumen(idProducto: Long): Flow<ProductoResumen?>
+
+    // Busca un producto activo por código de barras.
+    suspend fun buscarPorSku(sku: String): ProductoResumen?
 }
