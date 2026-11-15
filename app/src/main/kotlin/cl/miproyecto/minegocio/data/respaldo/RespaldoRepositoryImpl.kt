@@ -1,6 +1,7 @@
 package cl.miproyecto.minegocio.data.respaldo
 
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import androidx.sqlite.db.SimpleSQLiteQuery
 import cl.miproyecto.minegocio.data.local.database.MiNegocioDatabase
@@ -41,9 +42,9 @@ class RespaldoRepositoryImpl(
             ?: throw IOException("No se pudo abrir el respaldo")
         entrada.use { input -> temporal.outputStream().use { input.copyTo(it) } }
 
-        // Todo archivo SQLite empieza con el texto "SQLite format 3".
-        val cabecera = temporal.inputStream().use { it.readNBytes(15) }
-        if (String(cabecera) != "SQLite format 3") {
+        // Se revisa que sea un respaldo de ESTA app antes de reemplazar nada.
+        // Si se cargara otro archivo (de otra app, o dañado), la app no podría volver a abrir.
+        if (!esRespaldoValido(temporal)) {
             temporal.delete()
             throw IOException("El archivo no es un respaldo de Mi Negocio")
         }
@@ -71,3 +72,24 @@ private fun java.io.InputStream.readNBytes(n: Int): ByteArray {
     }
     return buffer.copyOf(leidos)
 }
+
+// Un respaldo es válido si:
+//  1) empieza con "SQLite format 3" (todo archivo SQLite empieza así),
+//  2) tiene las tablas de Mi Negocio (producto y la tabla interna de Room),
+//  3) su versión no es más nueva que la de esta app (no se puede "bajar" de versión).
+internal fun esRespaldoValido(archivo: File): Boolean {
+    val cabecera = archivo.inputStream().use { it.readNBytes(15) }
+    if (String(cabecera) != "SQLite format 3") return false
+    return runCatching {
+        SQLiteDatabase.openDatabase(archivo.path, null, SQLiteDatabase.OPEN_READONLY).use { db ->
+            val tablas = db.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('producto', 'room_master_table')",
+                null,
+            ).use { it.count }
+            tablas == 2 && db.version in 1..VERSION_BASE_DE_DATOS
+        }
+    }.getOrDefault(false)
+}
+
+// Debe ser igual a "version" en @Database (MiNegocioDatabase).
+internal const val VERSION_BASE_DE_DATOS = 3

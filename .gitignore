@@ -8,3 +8,11 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Firma del APK release: contraseñas y llave, nunca a git
+keystore.properties
+*.jks
+*.keystore
+
+# Informes de auditoría locales (no se publican)
+informes-seguridad/

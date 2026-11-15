@@ -6,6 +6,12 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- La app funciona 100 % sin internet. ML Kit (el lector de códigos) agrega estos permisos
+         solo para mandarle estadísticas de uso a Google; se quitan para que ningún dato salga del teléfono.
+         El modelo del lector viene incluido en la app, así que el escáner sigue funcionando igual. -->
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
+
     <application
         android:name=".MiNegocioApplication"
         android:allowBackup="true"
