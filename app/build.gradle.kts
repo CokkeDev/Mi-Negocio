@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
@@ -16,8 +18,26 @@ android {
     versionName = "1.0"
   }
 
+  // FIRMA DEL APK RELEASE
+  // Los datos de la llave se leen de keystore.properties (en la raíz del proyecto).
+  // Ese archivo y la llave (.jks) NO se suben a git: tienen contraseñas.
+  // Si el archivo no existe, el release se arma sin firmar.
+  val archivoFirma = rootProject.file("keystore.properties")
+  if (archivoFirma.exists()) {
+    val firma = Properties().apply { archivoFirma.inputStream().use { load(it) } }
+    signingConfigs {
+      create("release") {
+        storeFile = rootProject.file(firma.getProperty("storeFile"))
+        storePassword = firma.getProperty("storePassword")
+        keyAlias = firma.getProperty("keyAlias")
+        keyPassword = firma.getProperty("keyPassword")
+      }
+    }
+  }
+
   buildTypes {
     release {
+      if (archivoFirma.exists()) signingConfig = signingConfigs.getByName("release")
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
@@ -31,6 +51,11 @@ android {
     aidl = false
     buildConfig = false
     shaders = false
+  }
+
+  // Tests locales con Robolectric: simula Android en el computador (no necesita emulador).
+  testOptions {
+    unitTests.isIncludeAndroidResources = true
   }
 
   packaging {
@@ -77,6 +102,11 @@ dependencies {
   // Local tests: JUnit, coroutines, Android runner
   testImplementation(libs.junit)
   testImplementation(libs.kotlinx.coroutines.test)
+  // Base de datos en memoria y migraciones en tests locales
+  testImplementation(libs.robolectric)
+  testImplementation(libs.androidx.test.core)
+  testImplementation(libs.androidx.test.ext.junit)
+  testImplementation(libs.androidx.room.testing)
 
   // Instrumented tests: JUnit rules and runners
   androidTestImplementation(libs.androidx.test.core)
