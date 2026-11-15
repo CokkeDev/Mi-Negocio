@@ -373,13 +373,7 @@ cd Mi-Negocio
 | Respaldo | Solo acepta respaldos válidos de Mi Negocio |
 | Utilidades | Reparto FEFO, formato de pesos, normalización de nombres |
 
-## 🗺️ Próximos pasos
 
-- [ ] Incluir las fotos de los productos en el archivo de respaldo.
-- [ ] Exportar reportes a PDF o planilla.
-- [ ] Publicar en Google Play.
-
----
 
 <div align="center">
 
