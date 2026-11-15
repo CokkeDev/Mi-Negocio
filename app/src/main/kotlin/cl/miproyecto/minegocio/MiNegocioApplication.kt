@@ -2,9 +2,26 @@ package cl.miproyecto.minegocio
 
 import android.app.Application
 import cl.miproyecto.minegocio.data.local.database.MiNegocioDatabase
+import cl.miproyecto.minegocio.data.preferencias.ConfiguracionRepositoryImpl
+import cl.miproyecto.minegocio.data.repository.GastoRepositoryImpl
+import cl.miproyecto.minegocio.data.repository.LoteRepositoryImpl
+import cl.miproyecto.minegocio.data.repository.MermaRepositoryImpl
 import cl.miproyecto.minegocio.data.repository.ProductoRepositoryImpl
+import cl.miproyecto.minegocio.data.repository.ReporteRepositoryImpl
+import cl.miproyecto.minegocio.data.repository.VentaRepositoryImpl
+import cl.miproyecto.minegocio.data.respaldo.RespaldoRepositoryImpl
+import cl.miproyecto.minegocio.domain.repository.ConfiguracionRepository
+import cl.miproyecto.minegocio.domain.repository.GastoRepository
+import cl.miproyecto.minegocio.domain.repository.LoteRepository
+import cl.miproyecto.minegocio.domain.repository.MermaRepository
 import cl.miproyecto.minegocio.domain.repository.ProductoRepository
+import cl.miproyecto.minegocio.domain.repository.ReporteRepository
+import cl.miproyecto.minegocio.domain.repository.RespaldoRepository
+import cl.miproyecto.minegocio.domain.repository.VentaRepository
 
+// La "caja de herramientas" de la app: aquí se crean UNA VEZ la base de datos
+// y todos los repositorios, y los ViewModels los piden desde aquí.
+// (Esto se llama "inyección de dependencias manual").
 class MiNegocioApplication : Application() {
 
     // onCreate es lo primero que ejecuta Android al abrir la app.
@@ -14,12 +31,42 @@ class MiNegocioApplication : Application() {
         instancia = this
     }
 
+    // "by lazy": se crea la primera vez que alguien lo pide, no antes.
     val database: MiNegocioDatabase by lazy {
         MiNegocioDatabase.getInstance(this)
     }
 
+    // El tipo es la INTERFAZ (el "menú"), no el Impl (la "cocina").
     val productoRepository: ProductoRepository by lazy {
         ProductoRepositoryImpl(database.productoDao())
+    }
+
+    val loteRepository: LoteRepository by lazy {
+        LoteRepositoryImpl(database.loteDao())
+    }
+
+    val ventaRepository: VentaRepository by lazy {
+        VentaRepositoryImpl(database)
+    }
+
+    val mermaRepository: MermaRepository by lazy {
+        MermaRepositoryImpl(database)
+    }
+
+    val gastoRepository: GastoRepository by lazy {
+        GastoRepositoryImpl(database.gastoDao())
+    }
+
+    val reporteRepository: ReporteRepository by lazy {
+        ReporteRepositoryImpl(database.reporteDao())
+    }
+
+    val configuracionRepository: ConfiguracionRepository by lazy {
+        ConfiguracionRepositoryImpl(this)
+    }
+
+    val respaldoRepository: RespaldoRepository by lazy {
+        RespaldoRepositoryImpl(this, database)
     }
 
     companion object {

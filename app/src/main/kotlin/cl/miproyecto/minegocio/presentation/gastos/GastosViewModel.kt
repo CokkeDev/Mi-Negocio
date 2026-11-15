@@ -1,0 +1,89 @@
+package cl.miproyecto.minegocio.presentation.gastos
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import cl.miproyecto.minegocio.MiNegocioApplication
+import cl.miproyecto.minegocio.core.ui.Mensajero
+import cl.miproyecto.minegocio.core.utils.inicioDeMes
+import cl.miproyecto.minegocio.core.utils.inicioDeSemana
+import cl.miproyecto.minegocio.core.utils.inicioDelDiaSiguiente
+import cl.miproyecto.minegocio.domain.model.CategoriaGasto
+import cl.miproyecto.minegocio.domain.model.Gasto
+import cl.miproyecto.minegocio.domain.repository.GastoRepository
+import cl.miproyecto.minegocio.domain.repository.ReporteRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+data class GastosUiState(
+    val totalMes: Int = 0,
+    val ventasMes: Int = 0,
+    val porCategoria: List<Pair<CategoriaGasto, Int>> = emptyList(),
+    val estaSemana: List<Gasto> = emptyList(),
+    val antes: List<Gasto> = emptyList(),
+) {
+    // Qué parte de las ventas del mes se fue en gastos.
+    val porcentajeDeVentas: Int? get() = if (ventasMes > 0) totalMes * 100 / ventasMes else null
+}
+
+class GastosViewModel(
+    private val gastoRepository: GastoRepository,
+    reporteRepository: ReporteRepository,
+) : ViewModel() {
+
+    private val inicioMes = inicioDeMes()
+    private val hasta = inicioDeMes(meses = 1)
+
+    val uiState: StateFlow<GastosUiState> = combine(
+        gastoRepository.obtenerTodos(),
+        reporteRepository.gastosPorCategoria(inicioMes, hasta),
+        reporteRepository.resumen(inicioMes, inicioDelDiaSiguiente()),
+    ) { gastos, categorias, resumenMes ->
+        val lunes = inicioDeSemana()
+        GastosUiState(
+            totalMes = categorias.sumOf { it.second },
+            ventasMes = resumenMes.ventas,
+            porCategoria = categorias,
+            // partition: separa la lista en dos según la condición.
+            estaSemana = gastos.filter { it.fecha >= lunes },
+            antes = gastos.filter { it.fecha < lunes },
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GastosUiState())
+
+    // Devuelve un mensaje de error, o null si se guardó bien.
+    fun agregarGasto(descripcion: String, montoTexto: String, categoria: CategoriaGasto, fecha: Long): String? {
+        if (descripcion.isBlank()) return "Escribe en qué se gastó"
+        val monto = montoTexto.toIntOrNull()
+        if (monto == null || monto <= 0) return "Ingresa un monto mayor a 0"
+        viewModelScope.launch {
+            try {
+                gastoRepository.insertar(Gasto(descripcion = descripcion.trim(), monto = monto, categoria = categoria, fecha = fecha))
+                Mensajero.mostrar("Gasto agregado")
+            } catch (e: Exception) {
+                Mensajero.mostrar("No se pudo guardar el gasto")
+            }
+        }
+        return null
+    }
+
+    fun eliminarGasto(gasto: Gasto) {
+        viewModelScope.launch {
+            gastoRepository.eliminar(gasto.idGasto)
+            Mensajero.mostrar("Gasto eliminado")
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = MiNegocioApplication.instancia
+                GastosViewModel(app.gastoRepository, app.reporteRepository)
+            }
+        }
+    }
+}

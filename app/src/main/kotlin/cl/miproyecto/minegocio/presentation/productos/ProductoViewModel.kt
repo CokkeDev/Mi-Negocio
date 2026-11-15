@@ -1,7 +1,11 @@
 package cl.miproyecto.minegocio.presentation.productos
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import cl.miproyecto.minegocio.MiNegocioApplication
 import cl.miproyecto.minegocio.core.utils.normalizarNombre
 import cl.miproyecto.minegocio.domain.model.Producto
 import cl.miproyecto.minegocio.domain.repository.ProductoRepository
@@ -9,57 +13,53 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import cl.miproyecto.minegocio.MiNegocioApplication
 
+// ViewModel de "Agregar producto". Sigue el diagrama "Registro de producto" del README.
 class ProductoViewModel(
     private val repository: ProductoRepository,
 ) : ViewModel() {
 
-    // ── BLOQUE A: el estado ──
     private val _uiState =
         MutableStateFlow<AgregarProductoUiState>(AgregarProductoUiState.Inicial)
     val uiState: StateFlow<AgregarProductoUiState> = _uiState.asStateFlow()
 
-    // ── BLOQUE B: agregar producto ──
     fun agregarProducto(nombre: String, sku: String, urlImagen: String?, precioTexto: String) {
-        // B1. Validar datos
+        // 1) Validar datos
         val nombreNormalizado = normalizarNombre(nombre)
         if (nombreNormalizado.isBlank()) {
-            _uiState.value = AgregarProductoUiState.Error("Ingresa el nombre del producto")
+            _uiState.value = AgregarProductoUiState.Error("Ingresa el nombre del producto", CampoProducto.NOMBRE)
             return
         }
         val precio = precioTexto.trim().toIntOrNull()
         if (precio == null || precio <= 0) {
-            _uiState.value = AgregarProductoUiState.Error("Ingresa un precio válido mayor a 0")
+            _uiState.value = AgregarProductoUiState.Error("Ingresa un precio válido mayor a 0", CampoProducto.PRECIO)
             return
         }
         val skuLimpio = sku.trim().ifBlank { null }
 
-        // B2. Ir a la base de datos
         viewModelScope.launch {
             _uiState.value = AgregarProductoUiState.Guardando
             try {
+                // 2) Buscar duplicado
                 val existente = repository.buscarDuplicado(nombreNormalizado, skuLimpio)
 
-                // B3. Decidir según tu diagrama
                 _uiState.value = when {
+                    // 3a) No existe: se guarda
                     existente == null -> {
-                        repository.insertar(
+                        val id = repository.insertar(
                             Producto(
                                 sku = skuLimpio,
                                 nombre = nombre.trim(),
                                 nombreNormalizado = nombreNormalizado,
                                 urlImagen = urlImagen,
                                 precioVenta = precio,
-                            )
+                            ),
                         )
-                        AgregarProductoUiState.ProductoAgregado
+                        AgregarProductoUiState.ProductoAgregado(id)
                     }
-
+                    // 3b) Existe y está activo: error
                     existente.activo -> AgregarProductoUiState.YaExiste
+                    // 3c) Existe pero está eliminado: ofrecer reactivar
                     else -> AgregarProductoUiState.OfrecerReactivar(existente)
                 }
             } catch (e: Exception) {
@@ -68,14 +68,13 @@ class ProductoViewModel(
         }
     }
 
-    // ── BLOQUE C: reactivar ──
     fun reactivarProducto(idProducto: Long) {
         viewModelScope.launch {
             _uiState.value = AgregarProductoUiState.Guardando
             try {
                 val filas = repository.reactivar(idProducto)
                 _uiState.value = if (filas > 0) {
-                    AgregarProductoUiState.ProductoReactivado
+                    AgregarProductoUiState.ProductoReactivado(idProducto)
                 } else {
                     AgregarProductoUiState.Error("No se encontró el producto")
                 }
@@ -85,12 +84,18 @@ class ProductoViewModel(
         }
     }
 
-    // ── BLOQUE D: cancelar ──
     fun cancelarReactivacion() {
         _uiState.value = AgregarProductoUiState.Inicial
     }
 
-    // --- Bloque E: el Factory ---
+    // Al escribir de nuevo en el formulario se borra el error anterior.
+    fun limpiarError() {
+        val actual = _uiState.value
+        if (actual is AgregarProductoUiState.Error || actual is AgregarProductoUiState.YaExiste) {
+            _uiState.value = AgregarProductoUiState.Inicial
+        }
+    }
+
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
