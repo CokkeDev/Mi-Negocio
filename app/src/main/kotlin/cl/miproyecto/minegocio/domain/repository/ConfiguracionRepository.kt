@@ -19,5 +19,12 @@ interface RespaldoRepository {
     suspend fun crearRespaldo(destino: Uri)
 
     // Reemplaza la base de datos por la del archivo. Después hay que reiniciar la app.
+    // Si falla ANTES de cerrar la base, lanza IOException y la app sigue normal.
+    // Si falla DESPUÉS, lanza RestauracionInterrumpidaException: hay que reiniciar igual.
     suspend fun restaurarRespaldo(origen: Uri)
 }
+
+// La base de datos ya se cerró, pero no se pudo poner el respaldo en su lugar.
+// Los datos anteriores siguen guardados; al reiniciar, la app los vuelve a abrir.
+class RestauracionInterrumpidaException(causa: Throwable) :
+    Exception("No se pudo terminar de restaurar el respaldo", causa)

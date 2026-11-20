@@ -13,6 +13,7 @@ import cl.miproyecto.minegocio.domain.model.Producto
 import cl.miproyecto.minegocio.domain.repository.ConfiguracionRepository
 import cl.miproyecto.minegocio.domain.repository.ProductoRepository
 import cl.miproyecto.minegocio.domain.repository.RespaldoRepository
+import cl.miproyecto.minegocio.domain.repository.RestauracionInterrumpidaException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -66,6 +67,9 @@ class ConfiguracionViewModel(
             _trabajando.value = true
             try {
                 respaldoRepository.restaurarRespaldo(origen)
+                _reiniciar.value = true
+            } catch (e: RestauracionInterrumpidaException) {
+                // La base de datos ya está cerrada: la app no puede seguir sin reiniciarse.
                 _reiniciar.value = true
             } catch (e: Exception) {
                 Mensajero.mostrar(e.message ?: "No se pudo restaurar el respaldo")
