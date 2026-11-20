@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.sqlite.db.SimpleSQLiteQuery
 import cl.miproyecto.minegocio.data.local.database.MiNegocioDatabase
 import cl.miproyecto.minegocio.domain.repository.RespaldoRepository
+import cl.miproyecto.minegocio.domain.repository.RestauracionInterrumpidaException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -36,33 +37,64 @@ class RespaldoRepositoryImpl(
     }
 
     override suspend fun restaurarRespaldo(origen: Uri): Unit = withContext(Dispatchers.IO) {
-        // 1) Se copia primero a un archivo temporal y se revisa que sea una base de datos SQLite.
-        val temporal = File(context.cacheDir, "respaldo_restaurar.db")
-        val entrada = context.contentResolver.openInputStream(origen)
-            ?: throw IOException("No se pudo abrir el respaldo")
-        entrada.use { input -> temporal.outputStream().use { input.copyTo(it) } }
+        val archivo = context.getDatabasePath(MiNegocioDatabase.NOMBRE_ARCHIVO)
+        // El respaldo se prepara JUNTO a la base de datos (en la misma carpeta),
+        // porque solo así el cambio final puede ser un "renombrar", que es todo o nada.
+        val preparado = File(archivo.path + ".restaurando")
 
-        // Se revisa que sea un respaldo de ESTA app antes de reemplazar nada.
-        // Si se cargara otro archivo (de otra app, o dañado), la app no podría volver a abrir.
-        if (!esRespaldoValido(temporal)) {
-            temporal.delete()
-            throw IOException("El archivo no es un respaldo de Mi Negocio")
+        // 1) Se copia el respaldo y se revisa que sea de ESTA app.
+        //    Todo lo que puede fallar (sin espacio, archivo dañado) pasa AQUÍ,
+        //    con la base de datos actual todavía abierta e intacta.
+        try {
+            val entrada = context.contentResolver.openInputStream(origen)
+                ?: throw IOException("No se pudo abrir el respaldo")
+            entrada.use { input -> preparado.outputStream().use { input.copyTo(it) } }
+            // Si se cargara otro archivo (de otra app, o dañado), la app no podría volver a abrir.
+            if (!esRespaldoValido(preparado)) {
+                throw IOException("El archivo no es un respaldo de Mi Negocio")
+            }
+        } catch (e: Exception) {
+            borrarConAuxiliares(preparado)
+            throw e
         }
 
-        // 2) Se cierra la base de datos actual y se reemplaza el archivo.
+        // 2) Se cierra la base de datos. Desde aquí la app SIEMPRE debe reiniciarse,
+        //    aunque algo falle, porque ya no se puede seguir usando la base cerrada.
         database.close()
-        val archivo = context.getDatabasePath(MiNegocioDatabase.NOMBRE_ARCHIVO)
-        File(archivo.path + "-wal").delete()
-        File(archivo.path + "-shm").delete()
-        temporal.copyTo(archivo, overwrite = true)
-        temporal.delete()
+        try {
+            File(archivo.path + "-wal").delete()
+            File(archivo.path + "-shm").delete()
+            reemplazarArchivo(preparado, archivo)
+            // Quedan solo los auxiliares que SQLite creó al revisar el respaldo.
+            borrarConAuxiliares(preparado)
+        } catch (e: Exception) {
+            borrarConAuxiliares(preparado)
+            throw RestauracionInterrumpidaException(e)
+        }
         // 3) Al reiniciar la app, Room abre el archivo nuevo
         //    (y si es de una versión antigua, aplica las migraciones).
     }
 }
 
-// readNBytes no existe en Android antiguo; esta versión simple lee hasta "n" bytes.
-private fun java.io.InputStream.readNBytes(n: Int): ByteArray {
+// Cambia "destino" por "nuevo" de una sola vez: nunca queda un archivo copiado a medias.
+// En Android, renombrar dentro de la misma carpeta reemplaza el archivo de forma atómica.
+// (En Windows, donde corren los tests en el computador, renombrar falla si el destino
+// existe; por eso se borra y se vuelve a intentar.)
+internal fun reemplazarArchivo(nuevo: File, destino: File) {
+    if (nuevo.renameTo(destino)) return
+    if (destino.delete() && nuevo.renameTo(destino)) return
+    throw IOException("No se pudo reemplazar ${destino.name}")
+}
+
+// Borra el archivo y los que SQLite crea al lado al abrirlo (-wal, -shm, -journal).
+private fun borrarConAuxiliares(archivo: File) {
+    for (sufijo in listOf("", "-wal", "-shm", "-journal")) File(archivo.path + sufijo).delete()
+}
+
+// Lee hasta "n" bytes. OJO: no se puede llamar "readNBytes", porque Java ya tiene una
+// función con ese nombre (solo desde Android 13) y Kotlin usaría esa en vez de esta:
+// en Android 7 a 12 la app se cerraría al restaurar.
+private fun java.io.InputStream.leerHasta(n: Int): ByteArray {
     val buffer = ByteArray(n)
     var leidos = 0
     while (leidos < n) {
@@ -78,7 +110,7 @@ private fun java.io.InputStream.readNBytes(n: Int): ByteArray {
 //  2) tiene las tablas de Mi Negocio (producto y la tabla interna de Room),
 //  3) su versión no es más nueva que la de esta app (no se puede "bajar" de versión).
 internal fun esRespaldoValido(archivo: File): Boolean {
-    val cabecera = archivo.inputStream().use { it.readNBytes(15) }
+    val cabecera = archivo.inputStream().use { it.leerHasta(15) }
     if (String(cabecera) != "SQLite format 3") return false
     return runCatching {
         SQLiteDatabase.openDatabase(archivo.path, null, SQLiteDatabase.OPEN_READONLY).use { db ->
