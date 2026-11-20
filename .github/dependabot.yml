@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # Librerías y plugins de gradle/libs.versions.toml, y la versión del wrapper.
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      gradle-menores:
+        update-types: [minor, patch]
+
+  # Acciones usadas en .github/workflows.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci(deps)"
+    groups:
+      acciones:
+        patterns: ["*"]
