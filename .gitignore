@@ -7,7 +7,10 @@
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+.kotlin/
+# Rutas locales del SDK (y sus copias, por ejemplo local.properties.bak)
+local.properties*
+*.bak
 
 # Firma del APK release: contraseñas y llave, nunca a git
 keystore.properties
