@@ -61,7 +61,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cl.miproyecto.minegocio.MiNegocioApplication
 import cl.miproyecto.minegocio.core.ui.BarraSuperior
 import cl.miproyecto.minegocio.core.ui.BotonPrincipal
 import cl.miproyecto.minegocio.core.ui.BotonSecundario
@@ -98,7 +97,8 @@ fun AgregarProductoScreen(
     val context = LocalContext.current
     val vista = LocalView.current
     val scope = rememberCoroutineScope()
-    val config = MiNegocioApplication.instancia.configuracionRepository.configuracion.value
+    // Se "escucha" la configuración: si cambia, la pantalla usa el valor nuevo.
+    val config by viewModel.configuracion.collectAsStateWithLifecycle()
 
     // Copia la foto elegida a la carpeta de la app.
     val guardarFoto: (Uri) -> Unit = { uri ->

@@ -7,7 +7,9 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import cl.miproyecto.minegocio.MiNegocioApplication
 import cl.miproyecto.minegocio.core.utils.normalizarNombre
+import cl.miproyecto.minegocio.domain.model.Configuracion
 import cl.miproyecto.minegocio.domain.model.Producto
+import cl.miproyecto.minegocio.domain.repository.ConfiguracionRepository
 import cl.miproyecto.minegocio.domain.repository.ProductoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +19,11 @@ import kotlinx.coroutines.launch
 // ViewModel de "Agregar producto". Sigue el diagrama "Registro de producto" del README.
 class ProductoViewModel(
     private val repository: ProductoRepository,
+    configuracionRepository: ConfiguracionRepository,
 ) : ViewModel() {
+
+    // Ajustes de sonido y vibración al escanear (igual que en VentaViewModel).
+    val configuracion: StateFlow<Configuracion> = configuracionRepository.configuracion
 
     private val _uiState =
         MutableStateFlow<AgregarProductoUiState>(AgregarProductoUiState.Inicial)
@@ -99,7 +105,8 @@ class ProductoViewModel(
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                ProductoViewModel(MiNegocioApplication.instancia.productoRepository)
+                val app = MiNegocioApplication.instancia
+                ProductoViewModel(app.productoRepository, app.configuracionRepository)
             }
         }
     }
