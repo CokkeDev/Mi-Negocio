@@ -113,21 +113,23 @@ class ReporteRepositoryImpl(
     private val dao: ReporteDao,
 ) : ReporteRepository {
 
-    // "combine" junta 4 Flows en uno: cada vez que CUALQUIERA cambia,
-    // se vuelve a armar el ResumenPeriodo con los últimos valores de los 4.
+    // "combine" junta 5 Flows en uno: cada vez que CUALQUIERA cambia,
+    // se vuelve a armar el ResumenPeriodo con los últimos valores de los 5.
     override fun resumen(desde: Long, hasta: Long): Flow<ResumenPeriodo> =
         combine(
             dao.totalesVentas(desde, hasta),
             dao.gananciaVentas(desde, hasta),
             dao.totalGastos(desde, hasta),
             dao.costoMerma(desde, hasta),
-        ) { totales, ganancia, gastos, merma ->
+            dao.totalCompras(desde, hasta),
+        ) { totales, ganancia, gastos, merma, compras ->
             ResumenPeriodo(
                 ventas = totales.ventas,
                 boletas = totales.boletas,
                 gananciaVentas = ganancia,
                 gastos = gastos,
                 merma = merma,
+                compras = compras,
             )
         }
 

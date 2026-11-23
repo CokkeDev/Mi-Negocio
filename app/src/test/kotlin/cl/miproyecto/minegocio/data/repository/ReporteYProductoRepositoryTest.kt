@@ -11,6 +11,7 @@ import cl.miproyecto.minegocio.data.local.database.MiNegocioDatabase
 import cl.miproyecto.minegocio.domain.model.CategoriaGasto
 import cl.miproyecto.minegocio.domain.model.Gasto
 import cl.miproyecto.minegocio.domain.model.LineaVenta
+import cl.miproyecto.minegocio.domain.usecase.costoPorUnidad
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -72,6 +73,35 @@ class ReporteYProductoRepositoryTest {
         assertEquals(1_000, r.gastos)
         assertEquals(1_500, r.merma)
         assertEquals(2_000 - 1_000 - 1_500, r.gananciaNeta)
+    }
+
+    @Test
+    fun ganancia_de_hoy_es_ventas_menos_costo_de_los_lotes_ingresados() = runTest {
+        // Caso del bug: lote de 15 libros que costó $15.000 en total ($1.000 c/u), venta a $2.000.
+        val libro = db.crearProducto("Libro", 2_000)
+        db.crearLote(libro, costoPorUnidad(15_000, 15), unidades = 15)
+        suspend fun hoy() = reportes.resumen(ahora - DIA, ahora + DIA).first()
+
+        assertEquals(15_000, hoy().compras)
+        assertEquals(-15_000, hoy().ventasMenosCompras)
+
+        vender(libro, 2_000, 1)
+        assertEquals(-13_000, hoy().ventasMenosCompras)
+
+        vender(libro, 2_000, 1)
+        assertEquals(-11_000, hoy().ventasMenosCompras)
+        // El margen de lo vendido sigue siendo (2.000 - 1.000) x 2.
+        assertEquals(2_000, hoy().gananciaVentas)
+    }
+
+    @Test
+    fun compras_no_cuentan_lotes_ingresados_otro_dia() = runTest {
+        val libro = db.crearProducto("Libro", 2_000)
+        db.crearLote(libro, 1_000, unidades = 15, ingreso = ahora - 5 * DIA)
+
+        val r = reportes.resumen(ahora - DIA, ahora + DIA).first()
+
+        assertEquals(0, r.compras)
     }
 
     @Test
