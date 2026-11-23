@@ -10,6 +10,7 @@ import cl.miproyecto.minegocio.domain.model.Lote
 import cl.miproyecto.minegocio.domain.model.ProductoResumen
 import cl.miproyecto.minegocio.domain.repository.LoteRepository
 import cl.miproyecto.minegocio.domain.repository.ProductoRepository
+import cl.miproyecto.minegocio.domain.usecase.costoPorUnidad
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -40,11 +41,12 @@ class AgregarLoteViewModel(
     private val _uiState = MutableStateFlow<AgregarLoteUiState>(AgregarLoteUiState.Inicial)
     val uiState: StateFlow<AgregarLoteUiState> = _uiState.asStateFlow()
 
-    fun guardarLote(precioCompraTexto: String, unidades: Int, fechaVencimiento: Long?, noVence: Boolean) {
-        // 1) Validar: precio >= 0, unidades > 0, vencimiento opcional (pero hay que decidir).
-        val precio = precioCompraTexto.trim().toIntOrNull()
-        if (precio == null || precio < 0) {
-            _uiState.value = AgregarLoteUiState.Error("Ingresa el precio de compra (puede ser 0)", CampoLote.PRECIO)
+    // costoTotalTexto: lo que se pagó por el lote COMPLETO (no por unidad).
+    fun guardarLote(costoTotalTexto: String, unidades: Int, fechaVencimiento: Long?, noVence: Boolean) {
+        // 1) Validar: costo >= 0, unidades > 0, vencimiento opcional (pero hay que decidir).
+        val costoTotal = costoTotalTexto.trim().toIntOrNull()
+        if (costoTotal == null || costoTotal < 0) {
+            _uiState.value = AgregarLoteUiState.Error("Ingresa el costo total del lote (puede ser 0)", CampoLote.PRECIO)
             return
         }
         if (unidades <= 0) {
@@ -65,7 +67,8 @@ class AgregarLoteViewModel(
                 loteRepository.insertar(
                     Lote(
                         idProducto = idProducto,
-                        precioCompra = precio,
+                        // La base guarda el costo de CADA unidad: 15.000 / 15 = 1.000.
+                        precioCompra = costoPorUnidad(costoTotal, unidades),
                         // 2) fechaIngreso = hoy
                         fechaIngreso = System.currentTimeMillis(),
                         fechaVencimiento = if (noVence) null else fechaVencimiento,

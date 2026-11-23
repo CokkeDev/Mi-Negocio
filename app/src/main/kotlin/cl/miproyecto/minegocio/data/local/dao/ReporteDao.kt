@@ -46,6 +46,16 @@ interface ReporteDao {
     )
     fun costoMerma(desde: Long, hasta: Long): Flow<Int>
 
+    // Lo invertido en compras: costo de todos los lotes INGRESADOS en el rango.
+    // precio_compra es por unidad, así que se multiplica por las unidades compradas.
+    @Query(
+        """
+        SELECT COALESCE(SUM(precio_compra * unidades_iniciales), 0)
+        FROM lote WHERE fecha_ingreso >= :desde AND fecha_ingreso < :hasta
+        """
+    )
+    fun totalCompras(desde: Long, hasta: Long): Flow<Int>
+
     @Query("SELECT COALESCE(SUM(monto), 0) FROM gasto WHERE fecha >= :desde AND fecha < :hasta")
     fun totalGastos(desde: Long, hasta: Long): Flow<Int>
 

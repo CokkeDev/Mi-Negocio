@@ -121,8 +121,8 @@ fun ListaProductosScreen(
                     )
                     TarjetaDia(
                         titulo = "Ganancia de hoy",
-                        valor = formatoPesos(estado.hoy.gananciaVentas),
-                        detalle = "venta − costo del lote",
+                        valor = formatoPesos(estado.hoy.ventasMenosCompras),
+                        detalle = "ventas − costo de lotes",
                         destacada = false,
                         modifier = Modifier.weight(1f),
                     )

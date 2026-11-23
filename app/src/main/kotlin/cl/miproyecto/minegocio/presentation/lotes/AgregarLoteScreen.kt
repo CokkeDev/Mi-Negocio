@@ -57,6 +57,7 @@ import cl.miproyecto.minegocio.core.utils.formatoFecha
 import cl.miproyecto.minegocio.core.utils.formatoPesos
 import cl.miproyecto.minegocio.core.utils.formatoPesosConSigno
 import cl.miproyecto.minegocio.core.utils.inicioDelDia
+import cl.miproyecto.minegocio.domain.usecase.costoPorUnidad
 import cl.miproyecto.minegocio.ui.theme.extra
 import java.util.Calendar
 import java.util.TimeZone
@@ -86,7 +87,8 @@ fun AgregarLoteScreen(
     }
 
     val error = uiState as? AgregarLoteUiState.Error
-    val precioCompra = precio.toIntOrNull() ?: 0
+    val costoTotal = precio.toIntOrNull() ?: 0
+    val costoUnidad = if (unidades > 0) costoPorUnidad(costoTotal, unidades) else 0
     val precioVenta = producto?.producto?.precioVenta ?: 0
 
     Scaffold(
@@ -133,9 +135,10 @@ fun AgregarLoteScreen(
                 }
             }
 
-            // ── Precio de compra ──
+            // ── Costo total del lote ──
+            // Se pide lo que se pagó por TODO el lote; el costo por unidad lo calcula la app.
             Campo(
-                etiqueta = "Precio de compra por unidad *",
+                etiqueta = "Costo total del lote *",
                 valor = precio,
                 onCambio = { precio = soloDigitos(it); viewModel.limpiarError() },
                 prefijo = "$ ",
@@ -207,12 +210,14 @@ fun AgregarLoteScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 FilaDato("Fecha de ingreso", "Hoy, ${formatoDiaMes(System.currentTimeMillis())}")
-                FilaDato("Inversión del lote", formatoPesos(precioCompra * unidades))
-                // Sin precio de compra todavía no se puede calcular: se muestra "—".
-                val ganancia = (precioVenta - precioCompra) * unidades
+                FilaDato("Inversión del lote", formatoPesos(costoTotal))
+                // Lo que se guarda como precio de compra de cada unidad.
+                FilaDato("Costo por unidad", if (costoTotal > 0) formatoPesos(costoUnidad) else "—")
+                // Sin costo todavía no se puede calcular: se muestra "—".
+                val ganancia = (precioVenta - costoUnidad) * unidades
                 FilaDato(
                     "Ganancia estimada",
-                    if (precioCompra > 0) formatoPesosConSigno(ganancia) else "—",
+                    if (costoTotal > 0) formatoPesosConSigno(ganancia) else "—",
                     colorValor = if (ganancia < 0) MaterialTheme.colorScheme.error else MaterialTheme.extra.exito,
                     destacado = true,
                 )
