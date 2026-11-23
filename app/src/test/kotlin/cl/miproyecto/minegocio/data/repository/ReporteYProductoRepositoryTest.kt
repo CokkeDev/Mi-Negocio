@@ -105,6 +105,29 @@ class ReporteYProductoRepositoryTest {
     }
 
     @Test
+    fun compras_descuentan_producto_eliminado_sin_ventas() = runTest {
+        val error = db.crearProducto("Agregado por error", 2_000)
+        db.crearLote(error, 1_000, unidades = 10)
+        suspend fun hoy() = reportes.resumen(ahora - DIA, ahora + DIA).first()
+        assertEquals(10_000, hoy().compras)
+
+        productos.eliminar(error)
+
+        assertEquals(0, hoy().compras)
+    }
+
+    @Test
+    fun compras_conservan_producto_eliminado_que_ya_se_vendio() = runTest {
+        val libro = db.crearProducto("Libro", 2_000)
+        db.crearLote(libro, 1_000, unidades = 10)
+        vender(libro, 2_000, 1)
+
+        productos.eliminar(libro)
+
+        assertEquals(10_000, reportes.resumen(ahora - DIA, ahora + DIA).first().compras)
+    }
+
+    @Test
     fun resumen_no_cuenta_lo_que_esta_fuera_del_rango_de_fechas() = runTest {
         gastos.insertar(Gasto(descripcion = "Viejo", monto = 9_999, categoria = CategoriaGasto.OTROS, fecha = ahora - 40 * DIA))
         gastos.insertar(Gasto(descripcion = "Hoy", monto = 100, categoria = CategoriaGasto.OTROS, fecha = ahora))

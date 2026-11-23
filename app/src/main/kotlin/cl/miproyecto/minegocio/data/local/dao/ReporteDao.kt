@@ -48,10 +48,14 @@ interface ReporteDao {
 
     // Lo invertido en compras: costo de todos los lotes INGRESADOS en el rango.
     // precio_compra es por unidad, así que se multiplica por las unidades compradas.
+    // Si el producto fue eliminado (agregado por error) y el lote nunca se vendió, no cuenta.
     @Query(
         """
-        SELECT COALESCE(SUM(precio_compra * unidades_iniciales), 0)
-        FROM lote WHERE fecha_ingreso >= :desde AND fecha_ingreso < :hasta
+        SELECT COALESCE(SUM(l.precio_compra * l.unidades_iniciales), 0)
+        FROM lote l JOIN producto p ON p.id_producto = l.id_producto
+        WHERE l.fecha_ingreso >= :desde AND l.fecha_ingreso < :hasta
+          AND (p.activo = 1
+               OR EXISTS (SELECT 1 FROM detalle_venta d WHERE d.id_lote = l.id_lote))
         """
     )
     fun totalCompras(desde: Long, hasta: Long): Flow<Int>
