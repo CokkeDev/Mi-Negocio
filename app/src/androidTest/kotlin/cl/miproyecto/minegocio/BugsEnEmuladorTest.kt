@@ -197,4 +197,41 @@ class BugsEnEmuladorTest {
         assertEquals(Int.MAX_VALUE, rep.resumen(ahora - dia, ahora + dia).first().gastos)
         assertEquals(Int.MAX_VALUE, rep.gastosPorCategoria(ahora - dia, ahora + dia).first().single().second)
     }
+
+    // Costo por unidad con decimales: lote de 100 u. a $10 en total ($0,10 c/u).
+    // Con el costo redondeado ($0) la ganancia de 100 ventas a $5 salía $500; la real es $490.
+    @Test
+    fun ganancia_usa_el_costo_exacto_de_cada_unidad() = runBlocking {
+        val p = producto("Chicle", 5)
+        db.loteDao().insertar(
+            LoteEntity(idProducto = p, precioCompra = costoPorUnidad(10, 100), fechaIngreso = ahora,
+                fechaVencimiento = null, unidadesIniciales = 100, unidadesDisponibles = 100, costoTotal = 10),
+        )
+        VentaRepositoryImpl(db).registrarVenta(listOf(LineaVenta(p, "Chicle", 5, 100, 100)))
+        val rep = ReporteRepositoryImpl(db.reporteDao())
+        assertEquals(0, costoPorUnidad(10, 100))
+        assertEquals(490, rep.resumen(ahora - dia, ahora + dia).first().gananciaVentas)
+        assertEquals(490, rep.masVendidos(ahora - dia, ahora + dia, 5).first().single().ganancia)
+    }
+
+    @Test
+    fun ganancia_de_lote_antiguo_sin_costo_total_usa_precio_de_compra() = runBlocking {
+        val p = producto("Viejo2", 1000)
+        lote(p, 400, 10, null)   // costoTotal = -1
+        VentaRepositoryImpl(db).registrarVenta(listOf(LineaVenta(p, "Viejo2", 1000, 2, 10)))
+        val rep = ReporteRepositoryImpl(db.reporteDao())
+        assertEquals(1200, rep.resumen(ahora - dia, ahora + dia).first().gananciaVentas)
+    }
+
+    @Test
+    fun costo_de_merma_usa_el_costo_exacto() = runBlocking {
+        val p = producto("Chicle2", 5)
+        val l = db.loteDao().insertar(
+            LoteEntity(idProducto = p, precioCompra = 0, fechaIngreso = ahora, fechaVencimiento = null,
+                unidadesIniciales = 100, unidadesDisponibles = 100, costoTotal = 1000),
+        )
+        cl.miproyecto.minegocio.data.repository.MermaRepositoryImpl(db).registrarMerma(l, 50, "Dañado", null)
+        val rep = ReporteRepositoryImpl(db.reporteDao())
+        assertEquals(500, rep.resumen(ahora - dia, ahora + dia).first().merma)
+    }
 }

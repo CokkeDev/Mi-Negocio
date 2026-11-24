@@ -14,7 +14,10 @@ import cl.miproyecto.minegocio.domain.repository.ProductoRepository
 import cl.miproyecto.minegocio.domain.repository.VentaRepository
 import cl.miproyecto.minegocio.domain.usecase.BOLETA_MAXIMA
 import cl.miproyecto.minegocio.domain.usecase.totalSeguro
+import cl.miproyecto.minegocio.core.utils.diaActual
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -65,7 +68,8 @@ class VentaViewModel(
     val configuracion: StateFlow<Configuracion> = configuracionRepository.configuracion
 
     // Todos los productos (para elegir los que no tienen código de barras).
-    val productos: StateFlow<List<ProductoResumen>> = productoRepository.obtenerConStock()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val productos: StateFlow<List<ProductoResumen>> = diaActual().flatMapLatest { productoRepository.obtenerConStock() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private var contadorAvisos = 0
@@ -75,7 +79,7 @@ class VentaViewModel(
         // de un producto mientras se arma la boleta, la línea se actualiza (no se cobra el
         // precio viejo). Si el producto ya no existe o se quedó sin stock, la línea se quita.
         viewModelScope.launch {
-            productoRepository.obtenerConStock().collect { lista ->
+            diaActual().flatMapLatest { productoRepository.obtenerConStock() }.collect { lista ->
                 val porId = lista.associateBy { it.producto.idProducto }
                 _uiState.update { estado ->
                     // Mientras se confirma la venta la boleta no se toca.

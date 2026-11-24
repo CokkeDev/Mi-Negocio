@@ -11,6 +11,12 @@ import kotlinx.coroutines.flow.Flow
 // Consultas que SUMAN datos para los reportes.
 // Reciben un rango de fechas: desde (incluido) y hasta (no incluido), en milisegundos.
 // Todas son Flow: si se registra una venta, los reportes se actualizan solos.
+// Costo de UNA unidad del lote, con decimales. precio_compra está redondeado al peso
+// (ej: $0,10 queda en $0), y eso inflaba la ganancia en lotes de unidades muy baratas.
+// costo_total / unidades_iniciales es exacto; en lotes antiguos (-1) se usa precio_compra.
+private const val COSTO_UNIDAD =
+    "(CASE WHEN l.costo_total >= 0 THEN l.costo_total * 1.0 / l.unidades_iniciales ELSE l.precio_compra END)"
+
 @Dao
 interface ReporteDao {
 
@@ -23,11 +29,11 @@ interface ReporteDao {
     )
     fun totalesVentas(desde: Long, hasta: Long): Flow<TotalesVentas>
 
-    // Ganancia: por cada detalle, (precio de venta - precio de compra del lote) x cantidad.
+    // Ganancia: por cada detalle, (precio de venta - costo de una unidad del lote) x cantidad.
     // JOIN une tablas: el detalle con su venta (para la fecha) y con su lote (para el costo).
     @Query(
         """
-        SELECT COALESCE(SUM(d.cantidad * (d.precio_unitario - l.precio_compra)), 0)
+        SELECT CAST(ROUND(COALESCE(SUM(d.cantidad * (d.precio_unitario - $COSTO_UNIDAD)), 0)) AS INTEGER)
         FROM detalle_venta d
         JOIN venta v ON v.id_venta = d.id_venta
         JOIN lote l ON l.id_lote = d.id_lote
@@ -39,7 +45,7 @@ interface ReporteDao {
     // Cuánto costó la merma: unidades perdidas x precio de compra del lote.
     @Query(
         """
-        SELECT COALESCE(SUM(p.cantidad * l.precio_compra), 0)
+        SELECT CAST(ROUND(COALESCE(SUM(p.cantidad * $COSTO_UNIDAD), 0)) AS INTEGER)
         FROM perdida p JOIN lote l ON l.id_lote = p.id_lote
         WHERE p.fecha >= :desde AND p.fecha < :hasta
         """
@@ -79,7 +85,7 @@ interface ReporteDao {
         """
         SELECT pr.nombre AS nombre,
                SUM(d.cantidad) AS unidades,
-               SUM(d.cantidad * (d.precio_unitario - l.precio_compra)) AS ganancia
+               CAST(ROUND(SUM(d.cantidad * (d.precio_unitario - $COSTO_UNIDAD))) AS INTEGER) AS ganancia
         FROM detalle_venta d
         JOIN venta v ON v.id_venta = d.id_venta
         JOIN lote l ON l.id_lote = d.id_lote

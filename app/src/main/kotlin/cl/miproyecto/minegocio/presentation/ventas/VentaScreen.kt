@@ -121,7 +121,9 @@ fun VentaScreen(
                 .height(280.dp)
                 .clipToBounds(),
         ) {
+            var hayCamara by remember { mutableStateOf(true) }
             EscanerCodigo(
+                onPermisoCambio = { hayCamara = it },
                 onCodigo = { codigo ->
                     viewModel.escanearSku(codigo) {
                         avisarEscaneo(vista, config.sonidoAlEscanear, config.vibrarAlAgregar)
@@ -131,6 +133,7 @@ fun VentaScreen(
                 linternaEncendida = linterna,
             )
             MarcoEscaner(
+                mostrarVisor = hayCamara,
                 titulo = "Nueva venta",
                 onCerrar = salir,
                 linterna = linterna,
@@ -158,7 +161,7 @@ fun VentaScreen(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    if (estado.lineas.isEmpty()) "Boleta" else "Boleta · ${estado.unidades} productos",
+                    if (estado.lineas.isEmpty()) "Boleta" else "Boleta · ${if (estado.unidades == 1) "1 producto" else "${estado.unidades} productos"}",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f),

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import cl.miproyecto.minegocio.MiNegocioApplication
 import cl.miproyecto.minegocio.core.ui.Mensajero
+import cl.miproyecto.minegocio.core.utils.diaActual
 import cl.miproyecto.minegocio.core.utils.inicioDeMes
 import cl.miproyecto.minegocio.domain.model.Configuracion
 import cl.miproyecto.minegocio.domain.model.Lote
@@ -15,7 +16,9 @@ import cl.miproyecto.minegocio.domain.repository.ConfiguracionRepository
 import cl.miproyecto.minegocio.domain.repository.LoteRepository
 import cl.miproyecto.minegocio.domain.repository.ProductoRepository
 import cl.miproyecto.minegocio.domain.repository.ReporteRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -47,10 +50,11 @@ class DetalleProductoViewModel(
     configuracionRepository: ConfiguracionRepository,
 ) : ViewModel() {
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<DetalleUiState> = combine(
-        productoRepository.obtenerResumen(idProducto),
+        diaActual().flatMapLatest { productoRepository.obtenerResumen(idProducto) },
         loteRepository.obtenerPorProducto(idProducto),
-        reporteRepository.unidadesVendidas(idProducto, inicioDeMes()),
+        diaActual().flatMapLatest { dia -> reporteRepository.unidadesVendidas(idProducto, inicioDeMes(dia)) },
         configuracionRepository.configuracion,
     ) { resumen, lotes, vendidas, config ->
         DetalleUiState(false, resumen, lotes, vendidas, config)
