@@ -143,18 +143,18 @@ class ReporteRepositoryImpl(
         val inicios = (meses - 1 downTo 0).map { inicioDeMes(meses = -it) }
         val desde = inicios.first()
         return combine(
-            dao.gananciaPorMes(desde),
+            dao.ventasPorMes(desde),
             dao.gastosPorMes(desde),
-            dao.mermaPorMes(desde),
-        ) { ganancias, gastos, mermas ->
+            dao.comprasPorMes(desde),
+        ) { ventas, gastos, compras ->
             // associate: convierte la lista en un "diccionario" mes -> monto.
-            val g = ganancias.associate { it.mes to it.monto }
+            val v = ventas.associate { it.mes to it.monto }
             val gs = gastos.associate { it.mes to it.monto }
-            val m = mermas.associate { it.mes to it.monto }
+            val c = compras.associate { it.mes to it.monto }
             inicios.map { inicio ->
                 val clave = claveMes(inicio)
-                // "?: 0": si ese mes no tuvo datos, cuenta 0.
-                GananciaMes(inicio, (g[clave] ?: 0) - (gs[clave] ?: 0) - (m[clave] ?: 0))
+                // "?: 0": si ese mes no tuvo datos, cuenta 0. Misma fórmula que ResumenPeriodo.
+                GananciaMes(inicio, (v[clave] ?: 0) - (c[clave] ?: 0) - (gs[clave] ?: 0))
             }
         }
     }

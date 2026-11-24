@@ -111,16 +111,12 @@ interface ReporteDao {
 
     @Query(
         """
-        SELECT strftime('%Y-%m', v.fecha / 1000, 'unixepoch', 'localtime') AS mes,
-               SUM(d.cantidad * (d.precio_unitario - l.precio_compra)) AS monto
-        FROM detalle_venta d
-        JOIN venta v ON v.id_venta = d.id_venta
-        JOIN lote l ON l.id_lote = d.id_lote
-        WHERE v.fecha >= :desde
-        GROUP BY mes
+        SELECT strftime('%Y-%m', fecha / 1000, 'unixepoch', 'localtime') AS mes,
+               SUM(total) AS monto
+        FROM venta WHERE fecha >= :desde GROUP BY mes
         """
     )
-    fun gananciaPorMes(desde: Long): Flow<List<MontoPorMes>>
+    fun ventasPorMes(desde: Long): Flow<List<MontoPorMes>>
 
     @Query(
         """
@@ -133,11 +129,14 @@ interface ReporteDao {
 
     @Query(
         """
-        SELECT strftime('%Y-%m', p.fecha / 1000, 'unixepoch', 'localtime') AS mes,
-               SUM(p.cantidad * l.precio_compra) AS monto
-        FROM perdida p JOIN lote l ON l.id_lote = p.id_lote
-        WHERE p.fecha >= :desde GROUP BY mes
+        SELECT strftime('%Y-%m', l.fecha_ingreso / 1000, 'unixepoch', 'localtime') AS mes,
+               SUM(l.precio_compra * l.unidades_iniciales) AS monto
+        FROM lote l JOIN producto p ON p.id_producto = l.id_producto
+        WHERE l.fecha_ingreso >= :desde
+          AND (p.activo = 1
+               OR EXISTS (SELECT 1 FROM detalle_venta d WHERE d.id_lote = l.id_lote))
+        GROUP BY mes
         """
     )
-    fun mermaPorMes(desde: Long): Flow<List<MontoPorMes>>
+    fun comprasPorMes(desde: Long): Flow<List<MontoPorMes>>
 }

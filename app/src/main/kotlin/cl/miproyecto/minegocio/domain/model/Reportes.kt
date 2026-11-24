@@ -15,8 +15,9 @@ data class ResumenPeriodo(
     // Lo invertido en lotes ingresados en el periodo (costo total de cada lote).
     val compras: Int = 0,
 ) {
-    // Lo que de verdad le queda al negocio.
-    val gananciaNeta: Int get() = gananciaVentas - gastos - merma
+    // Lo que de verdad le queda al negocio: ventas - lotes comprados - gastos.
+    // La merma no se resta: ya está pagada dentro del costo del lote.
+    val gananciaNeta: Int get() = ventas - compras - gastos
 
     // Flujo de caja: lo que entró por ventas menos lo que se pagó por lotes.
     // Ej: lote de 15 u. a $15.000 y 2 ventas de $2.000 -> 4.000 - 15.000 = −11.000.
