@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import cl.miproyecto.minegocio.MiNegocioApplication
 import cl.miproyecto.minegocio.core.ui.Mensajero
+import cl.miproyecto.minegocio.core.utils.diaActual
 import cl.miproyecto.minegocio.core.utils.inicioDeMes
 import cl.miproyecto.minegocio.core.utils.inicioDeSemana
 import cl.miproyecto.minegocio.core.utils.inicioDelDiaSiguiente
@@ -15,7 +16,9 @@ import cl.miproyecto.minegocio.domain.model.Gasto
 import cl.miproyecto.minegocio.domain.repository.GastoRepository
 import cl.miproyecto.minegocio.domain.repository.ReporteRepository
 import cl.miproyecto.minegocio.domain.usecase.GASTO_MAXIMO
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -39,23 +42,26 @@ class GastosViewModel(
     reporteRepository: ReporteRepository,
 ) : ViewModel() {
 
-    private val inicioMes = inicioDeMes()
-    private val hasta = inicioDeMes(meses = 1)
-
-    val uiState: StateFlow<GastosUiState> = combine(
-        gastoRepository.obtenerTodos(),
-        reporteRepository.gastosPorCategoria(inicioMes, hasta),
-        reporteRepository.resumen(inicioMes, inicioDelDiaSiguiente()),
-    ) { gastos, categorias, resumenMes ->
-        val lunes = inicioDeSemana()
-        GastosUiState(
-            totalMes = categorias.sumOf { it.second },
-            ventasMes = resumenMes.ventas,
-            porCategoria = categorias,
-            // partition: separa la lista en dos según la condición.
-            estaSemana = gastos.filter { it.fecha >= lunes },
-            antes = gastos.filter { it.fecha < lunes },
-        )
+    // diaActual().flatMapLatest: si la app queda abierta y cambia el día (o el mes),
+    // los totales se recalculan con el rango nuevo.
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val uiState: StateFlow<GastosUiState> = diaActual().flatMapLatest { dia ->
+        val inicioMes = inicioDeMes(dia)
+        val hasta = inicioDeMes(dia, meses = 1)
+        combine(
+            gastoRepository.obtenerTodos(),
+            reporteRepository.gastosPorCategoria(inicioMes, hasta),
+            reporteRepository.resumen(inicioMes, inicioDelDiaSiguiente(dia)),
+        ) { gastos, categorias, resumenMes ->
+            val lunes = inicioDeSemana(dia)
+            GastosUiState(
+                totalMes = categorias.sumOf { it.second },
+                ventasMes = resumenMes.ventas,
+                porCategoria = categorias,
+                estaSemana = gastos.filter { it.fecha >= lunes },
+                antes = gastos.filter { it.fecha < lunes },
+            )
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GastosUiState())
 
     // Devuelve un mensaje de error, o null si se guardó bien.

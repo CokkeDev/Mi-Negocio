@@ -148,7 +148,7 @@ fun DetalleProductoScreen(
             // ── Lotes ──
             item {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text("Lotes con stock", fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                    Text("Lotes con unidades", fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
                     if (estado.lotes.size > 1) {
                         Text(
                             "Se vende primero el que vence antes",

@@ -54,6 +54,9 @@ fun EscanerCodigo(
     onCodigo: (String) -> Unit,
     modifier: Modifier = Modifier,
     linternaEncendida: Boolean = false,
+    // Avisa si hay permiso de cámara, para que la pantalla esconda el marco del escáner
+    // cuando no hay cámara que apuntar.
+    onPermisoCambio: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     var tienePermiso by remember {
@@ -67,6 +70,8 @@ fun EscanerCodigo(
         tienePermiso = it
     }
     LaunchedEffect(Unit) { if (!tienePermiso) pedirPermiso.launch(Manifest.permission.CAMERA) }
+    val avisarPermiso by rememberUpdatedState(onPermisoCambio)
+    LaunchedEffect(tienePermiso) { avisarPermiso(tienePermiso) }
 
     if (!tienePermiso) {
         Box(modifier, contentAlignment = Alignment.Center) {
@@ -176,13 +181,20 @@ fun avisarEscaneo(vista: View, sonido: Boolean, vibrar: Boolean) {
 @Composable
 fun EscanerPantallaCompleta(onCodigo: (String) -> Unit, onCerrar: () -> Unit) {
     var linterna by remember { mutableStateOf(false) }
+    var hayCamara by remember { mutableStateOf(true) }
     Box(
         Modifier
             .fillMaxSize()
             .padding(0.dp),
     ) {
-        EscanerCodigo(onCodigo = onCodigo, modifier = Modifier.fillMaxSize(), linternaEncendida = linterna)
+        EscanerCodigo(
+            onCodigo = onCodigo,
+            modifier = Modifier.fillMaxSize(),
+            linternaEncendida = linterna,
+            onPermisoCambio = { hayCamara = it },
+        )
         MarcoEscaner(
+            mostrarVisor = hayCamara,
             titulo = "Escanear código",
             onCerrar = onCerrar,
             linterna = linterna,

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import cl.miproyecto.minegocio.MiNegocioApplication
+import cl.miproyecto.minegocio.core.utils.diaActual
 import cl.miproyecto.minegocio.core.utils.inicioDeAnio
 import cl.miproyecto.minegocio.core.utils.inicioDeMes
 import cl.miproyecto.minegocio.core.utils.inicioDeSemana
@@ -40,13 +41,15 @@ class ReportesViewModel(
 
     // flatMapLatest: cada vez que cambia el periodo, se "cambia de canal"
     // y se escuchan las consultas del nuevo rango de fechas.
-    val uiState: StateFlow<ReportesUiState> = periodo.flatMapLatest { p ->
+    // combine(periodo, diaActual()): también se vuelve a consultar cuando cambia el día.
+    val uiState: StateFlow<ReportesUiState> = combine(periodo, diaActual()) { p, dia -> p to dia }
+        .flatMapLatest { (p, dia) ->
         val desde = when (p) {
-            Periodo.SEMANA -> inicioDeSemana()
-            Periodo.MES -> inicioDeMes()
-            Periodo.ANIO -> inicioDeAnio()
+            Periodo.SEMANA -> inicioDeSemana(dia)
+            Periodo.MES -> inicioDeMes(dia)
+            Periodo.ANIO -> inicioDeAnio(dia)
         }
-        val hasta = inicioDelDiaSiguiente()
+        val hasta = inicioDelDiaSiguiente(dia)
         combine(
             repository.resumen(desde, hasta),
             repository.masVendidos(desde, hasta, limite = 5),

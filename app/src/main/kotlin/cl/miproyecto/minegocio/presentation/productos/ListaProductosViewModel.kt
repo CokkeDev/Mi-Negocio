@@ -16,7 +16,10 @@ import cl.miproyecto.minegocio.domain.model.ResumenPeriodo
 import cl.miproyecto.minegocio.domain.repository.ConfiguracionRepository
 import cl.miproyecto.minegocio.domain.repository.ProductoRepository
 import cl.miproyecto.minegocio.domain.repository.ReporteRepository
+import cl.miproyecto.minegocio.core.utils.diaActual
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -51,9 +54,12 @@ class ListaProductosViewModel(
 
     // "combine" junta 5 Flows: cada vez que cambia uno (llega un producto nuevo,
     // se escribe en el buscador, se vende algo...), se recalcula la pantalla.
+    // diaActual().flatMapLatest: al cambiar el día (pasada la medianoche) se vuelven a pedir
+    // los datos, así "Ventas de hoy" parte de cero y los lotes que vencieron dejan de contar.
+    @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<InicioUiState> = combine(
-        productoRepository.obtenerConStock(),
-        reporteRepository.resumen(inicioDelDia(), inicioDelDiaSiguiente()),
+        diaActual().flatMapLatest { productoRepository.obtenerConStock() },
+        diaActual().flatMapLatest { dia -> reporteRepository.resumen(dia, inicioDelDiaSiguiente(dia)) },
         configuracionRepository.configuracion,
         busqueda,
         filtro,

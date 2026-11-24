@@ -1,5 +1,9 @@
 package cl.miproyecto.minegocio.core.utils
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -74,3 +78,15 @@ fun nombreMes(t: Long): String =
 // "Sábado 14 de noviembre"
 fun fechaLarga(t: Long = System.currentTimeMillis()): String =
     SimpleDateFormat("EEEE d 'de' MMMM", LOCALE_ES).format(t).replaceFirstChar { it.uppercase() }
+
+// El día de HOY (00:00) como un Flow que se actualiza solo cuando cambia el día.
+// Sirve para que las pantallas que muestran "hoy" o "este mes" se refresquen si la app
+// queda abierta pasada la medianoche (antes seguían mostrando el día anterior).
+// Se revisa cada minuto (en vez de esperar hasta la medianoche) porque así también se
+// corrige si el celular estuvo dormido o si el usuario cambió la hora.
+fun diaActual(ahora: () -> Long = { System.currentTimeMillis() }): Flow<Long> = flow {
+    while (true) {
+        emit(inicioDelDia(ahora()))
+        delay(60_000)
+    }
+}.distinctUntilChanged()

@@ -32,6 +32,9 @@ fun MarcoEscaner(
     linterna: Boolean,
     onLinterna: () -> Unit,
     modifier: Modifier = Modifier,
+    // false = sin permiso de cámara: se esconden el recuadro y el texto de ayuda
+    // para que no se encimen con el mensaje de "Dar permiso".
+    mostrarVisor: Boolean = true,
 ) {
     val claro = Color(0xFFE0E3E6)
     Column(modifier = modifier.statusBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -58,6 +61,7 @@ fun MarcoEscaner(
                 )
             }
         }
+        if (!mostrarVisor) return@Column
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Box(
