@@ -170,4 +170,16 @@ class BugsEnEmuladorTest {
         producto("Pina", 100)   // antes chocaba como duplicado
         assertEquals(2, db.productoDao().obtenerActivos().first().size)
     }
+
+    // Bug 6: un producto eliminado ya no se puede consultar por id; al reactivarlo vuelve.
+    @Test
+    fun producto_eliminado_no_aparece_por_id_y_vuelve_al_reactivar() = runBlocking {
+        val p = producto("Borrado", 100)
+        assertTrue(db.productoDao().obtenerConStockPorId(p).first() != null)
+        db.productoDao().desactivar(p)
+        assertEquals(null, db.productoDao().obtenerConStockPorId(p).first())
+        assertEquals(0, db.productoDao().obtenerConStock().first().size)
+        db.productoDao().reactivar(p)
+        assertTrue(db.productoDao().obtenerConStockPorId(p).first() != null)
+    }
 }

@@ -80,8 +80,9 @@ interface ProductoDao {
     @Query("$SELECT_CON_STOCK WHERE p.activo = 1 ORDER BY p.nombre COLLATE NOCASE")
     fun obtenerConStock(): Flow<List<ProductoConStock>>
 
-    // Un producto con su stock (para la pantalla de detalle).
-    @Query("$SELECT_CON_STOCK WHERE p.id_producto = :idProducto")
+    // Un producto ACTIVO con su stock (para la pantalla de detalle).
+    // Si fue eliminado devuelve null: no se puede abrir su detalle, ingresar lotes ni registrar merma.
+    @Query("$SELECT_CON_STOCK WHERE p.id_producto = :idProducto AND p.activo = 1")
     fun obtenerConStockPorId(idProducto: Long): Flow<ProductoConStock?>
 
     // Busca un producto activo por su código de barras (para vender escaneando).
