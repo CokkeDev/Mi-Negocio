@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -96,7 +97,13 @@ fun ListaProductosScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(fechaLarga(), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(estado.configuracion.nombreNegocio, fontSize = 26.sp, fontWeight = FontWeight.Medium)
+                        Text(
+                            estado.configuracion.nombreNegocio,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                     FilledTonalIconButton(onClick = onEscanear, modifier = Modifier.size(48.dp)) {
                         Icon(Iconos.Escanear, contentDescription = "Escanear para vender")
@@ -162,11 +169,21 @@ fun ListaProductosScreen(
                 }
                 // Hay productos, pero ninguno coincide con la búsqueda o el filtro.
                 estado.productos.isEmpty() -> item {
-                    Text(
-                        "No hay productos que coincidan.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 24.dp),
-                    )
+                    Column(Modifier.padding(vertical = 24.dp)) {
+                        // Se dice QUÉ se buscó: la búsqueda se conserva al volver desde otra pantalla
+                        // y antes la lista parecía vacía sin saber por qué.
+                        Text(
+                            if (estado.busqueda.isBlank()) {
+                                "No hay productos en este filtro."
+                            } else {
+                                "No hay productos que coincidan con “${estado.busqueda.trim()}”."
+                            },
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        if (estado.busqueda.isNotBlank()) {
+                            TextButton(onClick = { viewModel.buscar("") }) { Text("Borrar búsqueda") }
+                        }
+                    }
                 }
                 else -> items(estado.productos, key = { it.producto.idProducto }) { resumen ->
                     FilaProducto(

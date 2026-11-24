@@ -15,7 +15,13 @@ sealed interface AgregarProductoUiState {
     // Se guardó: se lleva el id para abrir el detalle del producto nuevo.
     data class ProductoAgregado(val idProducto: Long) : AgregarProductoUiState
 
-    data object YaExiste : AgregarProductoUiState
+    // Ya hay un producto activo igual. Se indica POR QUÉ (mismo nombre y/o mismo código de
+    // barras) para marcar el campo correcto y decir cuál producto es.
+    data class YaExiste(
+        val porNombre: Boolean,
+        val porCodigo: Boolean,
+        val nombreExistente: String,
+    ) : AgregarProductoUiState
 
     data class OfrecerReactivar(val producto: Producto) : AgregarProductoUiState
 
