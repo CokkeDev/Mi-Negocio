@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import cl.miproyecto.minegocio.core.ui.spConTope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -78,7 +79,7 @@ fun ReportesScreen(
                             selected = estado.periodo == periodo,
                             onClick = { viewModel.elegirPeriodo(periodo) },
                             shape = SegmentedButtonDefaults.itemShape(i, opciones.size),
-                            label = { Text(texto) },
+                            label = { Text(texto, fontSize = spConTope(14f), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                             icon = {},
                         )
                     }
