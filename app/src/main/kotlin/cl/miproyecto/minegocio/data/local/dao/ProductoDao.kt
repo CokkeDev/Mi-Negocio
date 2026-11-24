@@ -46,6 +46,11 @@ interface ProductoDao {
     @Query("SELECT * FROM producto WHERE nombre_normalizado = :nombreNormalizado OR sku = :sku LIMIT 1")
     suspend fun buscarDuplicado(nombreNormalizado: String, sku: String?): ProductoEntity?
 
+    // Las rutas de las fotos que usan los productos (activos o eliminados).
+    // Sirve para saber qué fotos de la carpeta de la app ya no las usa nadie.
+    @Query("SELECT URL_imagen FROM producto WHERE URL_imagen IS NOT NULL")
+    suspend fun rutasImagenes(): List<String>
+
     //Insertar productos a la base de datos
     // @Insert no necesita SQL: Room lo arma solo a partir de la entidad.
     // Devuelve el id (número) que SQLite le dio al producto nuevo.

@@ -147,7 +147,7 @@ fun ConfiguracionScreen(
                         habilitado = !trabajando,
                     ) {
                         val fecha = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(System.currentTimeMillis())
-                        crear.launch("mi-negocio-respaldo-$fecha.db")
+                        crear.launch("mi-negocio-respaldo-$fecha.zip")
                     }
                     HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer)
                     FilaBoton(

@@ -18,10 +18,33 @@ import java.util.UUID
 
 private const val LADO_MAXIMO = 800
 
+// La carpeta privada donde se guardan las fotos de los productos.
+fun carpetaImagenes(context: Context): File = File(context.filesDir, "imagenes")
+
+// Borra una foto de producto que ya no se usa (se cambió por otra o se canceló el formulario).
+// Solo borra archivos que estén dentro de la carpeta "imagenes" de la app, por seguridad.
+fun borrarImagenProducto(ruta: String?) {
+    if (ruta == null) return
+    val archivo = File(ruta)
+    if (archivo.parentFile?.name == "imagenes") archivo.delete()
+}
+
+// Borra las fotos que ningún producto usa (quedaron de formularios que se cerraron a la fuerza,
+// o de versiones anteriores de la app). Solo toca fotos con más de "antesDe" milisegundos de
+// antigüedad: una foto recién elegida, de un formulario que todavía está abierto, no se toca.
+// Devuelve cuántas borró.
+fun limpiarImagenesHuerfanas(carpeta: File, rutasEnUso: Set<String>, modificadasAntesDe: Long): Int {
+    var borradas = 0
+    carpeta.listFiles { f -> f.isFile }?.forEach { foto ->
+        if (foto.path !in rutasEnUso && foto.lastModified() < modificadasAntesDe && foto.delete()) borradas++
+    }
+    return borradas
+}
+
 // Copia la imagen de "origen" a filesDir/imagenes/<nombre-al-azar>.jpg y devuelve la ruta.
 suspend fun guardarImagenProducto(context: Context, origen: Uri): String = withContext(Dispatchers.IO) {
     val bitmap = leerAchicada(context, origen)
-    val carpeta = File(context.filesDir, "imagenes").apply { mkdirs() }
+    val carpeta = carpetaImagenes(context).apply { mkdirs() }
     val archivo = File(carpeta, "${UUID.randomUUID()}.jpg")
     archivo.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 85, it) }
     bitmap.recycle()
