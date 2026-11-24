@@ -174,6 +174,9 @@ fun AgregarProductoScreen(
             // ── Foto ──
             SelectorFoto(rutaImagen, guardandoFoto) { elegirFoto = true }
 
+            // Si ya existe un producto igual: por nombre y/o por código de barras.
+            val yaExiste = uiState as? AgregarProductoUiState.YaExiste
+
             // ── Nombre ──
             Campo(
                 etiqueta = "Nombre *",
@@ -181,7 +184,8 @@ fun AgregarProductoScreen(
                 onCambio = { nombre = it; viewModel.limpiarError() },
                 placeholder = "Ej: Leche entera 1L",
                 error = when {
-                    uiState is AgregarProductoUiState.YaExiste -> "No se pudo agregar, el producto ya existe"
+                    yaExiste?.porNombre == true ->
+                        "Ya existe un producto con este nombre"
                     error?.campo == CampoProducto.NOMBRE -> error.mensaje
                     else -> null
                 },
@@ -195,13 +199,17 @@ fun AgregarProductoScreen(
                     onCambio = { sku = it.trim(); viewModel.limpiarError() },
                     placeholder = "7801234567890",
                     teclado = KeyboardType.Number,
+                    error = if (yaExiste?.porCodigo == true) "Este código ya lo tiene “${yaExiste.nombreExistente}”" else null,
                     modifier = Modifier.weight(1f),
                 )
                 FilledTonalButton(
                     onClick = { escaneando = true },
                     modifier = Modifier
-                        .height(56.dp)
-                        .padding(bottom = 0.dp),
+                        // Si el campo de código muestra un error debajo, el botón sube para
+                        // seguir alineado con la caja de texto y no con el mensaje.
+                        // (El padding va ANTES de height, si no achica el botón.)
+                        .padding(bottom = if (yaExiste?.porCodigo == true) 24.dp else 0.dp)
+                        .height(56.dp),
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Icon(Iconos.Escanear, contentDescription = null, modifier = Modifier.size(20.dp))

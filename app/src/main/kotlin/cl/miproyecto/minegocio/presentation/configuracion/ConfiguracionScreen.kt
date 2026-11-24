@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -123,7 +124,7 @@ fun ConfiguracionScreen(
                         Text(iniciales(config.nombreNegocio), color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                     }
                     Column(Modifier.weight(1f)) {
-                        Text(config.nombreNegocio, fontSize = 17.sp, fontWeight = FontWeight.Medium)
+                        Text(config.nombreNegocio, fontSize = 17.sp, fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         Text(
                             "Todo se guarda en este teléfono · sin cuenta",
                             fontSize = 12.sp,
@@ -262,7 +263,13 @@ fun ConfiguracionScreen(
             onDismissRequest = { editarNombre = false },
             title = { Text("Nombre del negocio") },
             text = {
-                OutlinedTextField(value = nombre, onValueChange = { nombre = it.take(40) }, singleLine = true)
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it.take(40) },
+                    singleLine = true,
+                    // El contador deja ver que hay un máximo (antes el texto se cortaba sin avisar).
+                    supportingText = { Text("${nombre.length}/40") },
+                )
             },
             confirmButton = {
                 TextButton(

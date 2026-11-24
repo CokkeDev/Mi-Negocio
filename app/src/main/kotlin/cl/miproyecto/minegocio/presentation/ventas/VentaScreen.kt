@@ -3,11 +3,14 @@ package cl.miproyecto.minegocio.presentation.ventas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,6 +48,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -111,16 +115,11 @@ fun VentaScreen(
         }
     }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        // ── Cámara ──
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .background(Color(0xFF101416))
-                .statusBarsPadding()
-                .height(280.dp)
-                .clipToBounds(),
-        ) {
+    // En horizontal la cámara va a la izquierda y la boleta a la derecha: con la cámara
+    // arriba (280 dp) no quedaba espacio para ver la boleta ni los botones.
+    val horizontal = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    val camaraContenido: @Composable BoxScope.() -> Unit = {
             var hayCamara by remember { mutableStateOf(true) }
             EscanerCodigo(
                 onPermisoCambio = { hayCamara = it },
@@ -150,75 +149,106 @@ fun VentaScreen(
                         .padding(horizontal = 16.dp),
                 ) { AvisoFlotante(aviso) }
             }
-        }
+    }
 
-        // ── Boleta ──
-        Column(
-            Modifier
-                .weight(1f)
-                .padding(start = 16.dp, end = 16.dp, top = 30.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    if (estado.lineas.isEmpty()) "Boleta" else "Boleta · ${if (estado.unidades == 1) "1 producto" else "${estado.unidades} productos"}",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(onClick = { elegirProducto = true }) {
-                    Icon(Iconos.Agregar, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Text(" Sin código", fontSize = 14.sp)
+    val boleta: @Composable (Modifier) -> Unit = { modificador ->
+            Column(
+                modificador.padding(start = 16.dp, end = 16.dp, top = if (horizontal) 12.dp else 30.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        if (estado.lineas.isEmpty()) "Boleta" else "Boleta · ${if (estado.unidades == 1) "1 unidad" else "${estado.unidades} unidades"}",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = { elegirProducto = true }) {
+                        Icon(Iconos.Agregar, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Text(" Sin código", fontSize = 14.sp)
+                    }
                 }
-            }
-            if (estado.lineas.isEmpty()) {
-                EstadoVacio(
-                    icono = Iconos.Escanear,
-                    titulo = "Escanea un producto",
-                    mensaje = "O toca “Sin código” para elegirlo de la lista.",
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.surfaceContainerLowest),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                ) {
-                    items(estado.lineas, key = { it.idProducto }) { linea ->
-                        FilaBoleta(
-                            linea = linea,
-                            onMenos = { viewModel.restar(linea.idProducto) },
-                            onMas = { viewModel.sumar(linea.idProducto) },
-                        )
-                        if (linea != estado.lineas.last()) HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer)
+                if (estado.lineas.isEmpty()) {
+                    EstadoVacio(
+                        icono = Iconos.Escanear,
+                        titulo = "Escanea un producto",
+                        mensaje = "O toca “Sin código” para elegirlo de la lista.",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                    ) {
+                        items(estado.lineas, key = { it.idProducto }) { linea ->
+                            FilaBoleta(
+                                linea = linea,
+                                onMenos = { viewModel.restar(linea.idProducto) },
+                                onMas = { viewModel.sumar(linea.idProducto) },
+                            )
+                            if (linea != estado.lineas.last()) HorizontalDivider(color = MaterialTheme.colorScheme.surfaceContainer)
+                        }
                     }
                 }
             }
-        }
+    }
 
-        // ── Total y botones ──
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-                .navigationBarsPadding()
-                .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text("Total", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                Text(formatoPesos(estado.total), fontSize = 30.sp, fontWeight = FontWeight.Bold)
+    val totales: @Composable () -> Unit = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                    .navigationBarsPadding()
+                    .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text("Total", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                    Text(formatoPesos(estado.total), fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    BotonSecundario("Rechazar", salir, Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
+                    BotonPrincipal(
+                        if (estado.registrando) "Registrando…" else "Aceptar venta",
+                        onClick = viewModel::confirmarVenta,
+                        habilitado = estado.lineas.isNotEmpty() && !estado.registrando,
+                        icono = Iconos.Listo,
+                        modifier = Modifier.weight(2f),
+                    )
+                }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                BotonSecundario("Rechazar", salir, Modifier.weight(1f), color = MaterialTheme.colorScheme.error)
-                BotonPrincipal(
-                    if (estado.registrando) "Registrando…" else "Aceptar venta",
-                    onClick = viewModel::confirmarVenta,
-                    habilitado = estado.lineas.isNotEmpty() && !estado.registrando,
-                    icono = Iconos.Listo,
-                    modifier = Modifier.weight(2f),
-                )
+    }
+
+    if (!horizontal) {
+        Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF101416))
+                    .statusBarsPadding()
+                    .height(280.dp)
+                    .clipToBounds(),
+                content = camaraContenido,
+            )
+            boleta(Modifier.weight(1f))
+            totales()
+        }
+    } else {
+        Row(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .background(Color(0xFF101416))
+                    .statusBarsPadding()
+                    .clipToBounds(),
+                content = camaraContenido,
+            )
+            Column(Modifier.weight(1f).fillMaxHeight().statusBarsPadding()) {
+                boleta(Modifier.weight(1f))
+                totales()
             }
         }
     }
@@ -244,7 +274,10 @@ fun VentaScreen(
         AlertDialog(
             onDismissRequest = { confirmarDescartar = false },
             title = { Text("¿Descartar la boleta?") },
-            text = { Text("Se perderán los ${estado.unidades} productos agregados. No se descuenta stock.") },
+            text = { Text(
+                if (estado.unidades == 1) "Se perderá la unidad agregada. No se descuenta stock."
+                else "Se perderán las ${estado.unidades} unidades agregadas. No se descuenta stock.",
+            ) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmarDescartar = false

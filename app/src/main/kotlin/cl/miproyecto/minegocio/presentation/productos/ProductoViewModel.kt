@@ -71,7 +71,11 @@ class ProductoViewModel(
                         AgregarProductoUiState.ProductoAgregado(id)
                     }
                     // 3b) Existe y está activo: error
-                    existente.activo -> AgregarProductoUiState.YaExiste
+                    existente.activo -> AgregarProductoUiState.YaExiste(
+                        porNombre = existente.nombreNormalizado == nombreNormalizado,
+                        porCodigo = skuLimpio != null && existente.sku == skuLimpio,
+                        nombreExistente = existente.nombre,
+                    )
                     // 3c) Existe pero está eliminado: ofrecer reactivar
                     else -> AgregarProductoUiState.OfrecerReactivar(existente)
                 }
