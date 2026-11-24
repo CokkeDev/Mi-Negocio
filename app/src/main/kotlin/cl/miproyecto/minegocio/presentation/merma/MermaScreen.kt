@@ -46,6 +46,7 @@ import cl.miproyecto.minegocio.core.ui.Iconos
 import cl.miproyecto.minegocio.core.ui.Mensajero
 import cl.miproyecto.minegocio.core.utils.formatoDiaMes
 import cl.miproyecto.minegocio.core.utils.formatoPesos
+import cl.miproyecto.minegocio.presentation.productos.etiquetasDeLotes
 import cl.miproyecto.minegocio.domain.model.MOTIVOS_MERMA
 
 // REGISTRAR MERMA: unidades que se perdieron (vencidas, dañadas, robadas...).
@@ -115,6 +116,7 @@ fun MermaScreen(
             // ── ¿De qué lote? ──
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Titulo("¿De qué lote?")
+                val etiquetas = etiquetasDeLotes(lotes)
                 lotes.forEach { lote ->
                     val elegido = lote.idLote == loteElegido?.idLote
                     val forma = RoundedCornerShape(14.dp)
@@ -140,7 +142,7 @@ fun MermaScreen(
                         RadioButton(selected = elegido, onClick = null)
                         Column(Modifier.padding(start = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(
-                                "Lote #${lote.idLote} · " + (lote.fechaVencimiento?.let { "vence ${formatoDiaMes(it)}" } ?: "no vence"),
+                                "${etiquetas.getValue(lote.idLote)} · " + (lote.fechaVencimiento?.let { "vence ${formatoDiaMes(it)}" } ?: "no vence"),
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium,
                             )

@@ -168,8 +168,14 @@ fun DetalleProductoScreen(
                     )
                 }
             }
+            val etiquetas = etiquetasDeLotes(estado.lotes)
             itemsIndexed(estado.lotes, key = { _, lote -> lote.idLote }) { indice, lote ->
-                TarjetaLote(lote, esProximo = indice == 0 && estado.lotes.size > 1, config = estado.configuracion)
+                TarjetaLote(
+                    lote,
+                    nombre = etiquetas.getValue(lote.idLote),
+                    esProximo = indice == 0 && estado.lotes.size > 1,
+                    config = estado.configuracion,
+                )
             }
         }
     }
@@ -213,7 +219,7 @@ private fun Dato(titulo: String, valor: String, modifier: Modifier, color: andro
 }
 
 @Composable
-private fun TarjetaLote(lote: Lote, esProximo: Boolean, config: Configuracion) {
+private fun TarjetaLote(lote: Lote, nombre: String, esProximo: Boolean, config: Configuracion) {
     val colores = MaterialTheme.colorScheme
     val forma = RoundedCornerShape(16.dp)
     Column(
@@ -226,7 +232,7 @@ private fun TarjetaLote(lote: Lote, esProximo: Boolean, config: Configuracion) {
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Lote #${lote.idLote}", fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+            Text(nombre, fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
             if (esProximo) Etiqueta("Próximo en venderse", colores.primary, colores.onPrimary)
         }
         // Barra: cuánto queda del lote.
