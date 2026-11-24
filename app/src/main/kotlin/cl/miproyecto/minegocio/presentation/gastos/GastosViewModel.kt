@@ -64,18 +64,26 @@ class GastosViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GastosUiState())
 
+    // true mientras se guarda un gasto (solo se usa desde el hilo principal).
+    private var guardando = false
+
     // Devuelve un mensaje de error, o null si se guardó bien.
     fun agregarGasto(descripcion: String, montoTexto: String, categoria: CategoriaGasto, fecha: Long): String? {
         if (descripcion.isBlank()) return "Escribe en qué se gastó"
         val monto = montoTexto.toIntOrNull()
         if (monto == null || monto <= 0) return "Ingresa un monto mayor a 0"
         if (monto > GASTO_MAXIMO) return "El monto no puede superar los \$10.000.000"
+        // Un solo guardado a la vez: con toques rápidos se registraba el gasto varias veces.
+        if (guardando) return null
+        guardando = true
         viewModelScope.launch {
             try {
                 gastoRepository.insertar(Gasto(descripcion = descripcion.trim(), monto = monto, categoria = categoria, fecha = fecha))
                 Mensajero.mostrar("Gasto agregado")
             } catch (e: Exception) {
                 Mensajero.mostrar("No se pudo guardar el gasto")
+            } finally {
+                guardando = false
             }
         }
         return null

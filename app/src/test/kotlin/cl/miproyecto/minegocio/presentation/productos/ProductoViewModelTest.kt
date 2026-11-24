@@ -25,7 +25,14 @@ class ProductoViewModelTest {
 
     private class ProductosFalsos(var duplicado: Producto?) : ProductoRepository {
         override suspend fun buscarDuplicado(nombreNormalizado: String, sku: String?): Producto? = duplicado
-        override suspend fun insertar(producto: Producto): Long = 1
+        var insertados = 0
+        var fallarSegundo = false
+        override suspend fun insertar(producto: Producto): Long {
+            insertados++
+            // Simula el índice único de la base: el segundo insert del mismo producto falla.
+            if (fallarSegundo && insertados > 1) error("UNIQUE constraint failed")
+            return 1
+        }
         override suspend fun reactivar(idProducto: Long): Int = 1
         override suspend fun eliminar(idProducto: Long): Int = 1
         override fun obtenerActivos(): Flow<List<Producto>> = flowOf(emptyList())
@@ -83,5 +90,14 @@ class ProductoViewModelTest {
         vm.agregarProducto("Leche entera 1L", "", null, "900")
         val estado = vm.uiState.value as AgregarProductoUiState.YaExiste
         assertEquals(false, estado.porCodigo)
+    }
+
+    @Test
+    fun toques_rapidos_en_agregar_no_pisan_el_exito_con_un_error() {
+        val repo = ProductosFalsos(null).apply { fallarSegundo = true }
+        val vm = ProductoViewModel(repo, ConfigFalsa())
+        repeat(3) { vm.agregarProducto("Producto doble", "", null, "500") }
+        assertEquals(1, repo.insertados)
+        assertTrue(vm.uiState.value is AgregarProductoUiState.ProductoAgregado)
     }
 }

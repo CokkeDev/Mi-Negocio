@@ -31,6 +31,10 @@ class ProductoViewModel(
     val uiState: StateFlow<AgregarProductoUiState> = _uiState.asStateFlow()
 
     fun agregarProducto(nombre: String, sku: String, urlImagen: String?, precioTexto: String) {
+        // Con toques rápidos la segunda llamada chocaba con el índice único y pisaba el éxito
+        // con "No se pudo guardar el producto" aunque ya estuviera guardado.
+        val actual = _uiState.value
+        if (actual is AgregarProductoUiState.Guardando || actual is AgregarProductoUiState.ProductoAgregado) return
         // 1) Validar datos
         val nombreNormalizado = normalizarNombre(nombre)
         if (nombreNormalizado.isBlank()) {
