@@ -1,6 +1,7 @@
 package cl.miproyecto.minegocio.core.utils
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class TextoUtilsTest {
@@ -21,13 +22,26 @@ class TextoUtilsTest {
     }
 
     @Test
-    fun convierteEnieEnN() {
-        assertEquals("pina", normalizarNombre("Piña"))
+    fun laEnieEsUnaLetraDistintaDeLaN() {
+        assertEquals("piña", normalizarNombre("Piña"))
+        assertNotEquals(normalizarNombre("Piña"), normalizarNombre("Pina"))
+        assertNotEquals(normalizarNombre("Año"), normalizarNombre("Ano"))
     }
 
     @Test
-    fun soloSimbolosQuedaVacio() {
-        assertEquals("", normalizarNombre("!!!"))
+    fun nombresSoloConSimbolosOEmojisNoQuedanVacios() {
+        assertEquals("!!!", normalizarNombre("!!!"))
+        assertEquals("🍫", normalizarNombre(" 🍫 "))
+    }
+
+    @Test
+    fun conservaLetrasDeOtrosAlfabetos() {
+        assertEquals("日本茶", normalizarNombre("日本茶"))
+    }
+
+    @Test
+    fun nombreEnBlancoSigueVacio() {
+        assertEquals("", normalizarNombre("   "))
     }
 
     @Test

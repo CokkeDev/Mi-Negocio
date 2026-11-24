@@ -11,6 +11,7 @@ import cl.miproyecto.minegocio.domain.model.Configuracion
 import cl.miproyecto.minegocio.domain.model.Producto
 import cl.miproyecto.minegocio.domain.repository.ConfiguracionRepository
 import cl.miproyecto.minegocio.domain.repository.ProductoRepository
+import cl.miproyecto.minegocio.domain.usecase.PRECIO_VENTA_MAXIMO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,6 +40,12 @@ class ProductoViewModel(
         val precio = precioTexto.trim().toIntOrNull()
         if (precio == null || precio <= 0) {
             _uiState.value = AgregarProductoUiState.Error("Ingresa un precio válido mayor a 0", CampoProducto.PRECIO)
+            return
+        }
+        if (precio > PRECIO_VENTA_MAXIMO) {
+            _uiState.value = AgregarProductoUiState.Error(
+                "El precio no puede superar los \$1.000.000", CampoProducto.PRECIO,
+            )
             return
         }
         val skuLimpio = sku.trim().ifBlank { null }

@@ -9,4 +9,6 @@ data class Lote(
     val fechaVencimiento: Long?,
     val unidadesIniciales: Int,
     val unidadesDisponibles: Int,
+    // Costo del lote completo sin redondear (-1 = lote antiguo, sin este dato).
+    val costoTotal: Int = -1,
 )

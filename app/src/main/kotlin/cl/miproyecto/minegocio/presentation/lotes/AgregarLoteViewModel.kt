@@ -10,6 +10,8 @@ import cl.miproyecto.minegocio.domain.model.Lote
 import cl.miproyecto.minegocio.domain.model.ProductoResumen
 import cl.miproyecto.minegocio.domain.repository.LoteRepository
 import cl.miproyecto.minegocio.domain.repository.ProductoRepository
+import cl.miproyecto.minegocio.domain.usecase.COSTO_LOTE_MAXIMO
+import cl.miproyecto.minegocio.domain.usecase.UNIDADES_LOTE_MAXIMO
 import cl.miproyecto.minegocio.domain.usecase.costoPorUnidad
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -53,6 +55,14 @@ class AgregarLoteViewModel(
             _uiState.value = AgregarLoteUiState.Error("Las unidades deben ser mayores a 0", CampoLote.UNIDADES)
             return
         }
+        if (costoTotal > COSTO_LOTE_MAXIMO) {
+            _uiState.value = AgregarLoteUiState.Error("El costo no puede superar los \$1.000.000.000", CampoLote.PRECIO)
+            return
+        }
+        if (unidades > UNIDADES_LOTE_MAXIMO) {
+            _uiState.value = AgregarLoteUiState.Error("Máximo 100.000 unidades por lote", CampoLote.UNIDADES)
+            return
+        }
         if (!noVence && fechaVencimiento == null) {
             _uiState.value = AgregarLoteUiState.Error(
                 "Elige la fecha de vencimiento o marca que no vence",
@@ -75,6 +85,7 @@ class AgregarLoteViewModel(
                         unidadesIniciales = unidades,
                         // 3) Al comprar, quedan disponibles todas las unidades.
                         unidadesDisponibles = unidades,
+                        costoTotal = costoTotal,
                     ),
                 )
                 _uiState.value = AgregarLoteUiState.Guardado

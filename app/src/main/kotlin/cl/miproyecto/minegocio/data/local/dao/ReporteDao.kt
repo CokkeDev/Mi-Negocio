@@ -47,11 +47,11 @@ interface ReporteDao {
     fun costoMerma(desde: Long, hasta: Long): Flow<Int>
 
     // Lo invertido en compras: costo de todos los lotes INGRESADOS en el rango.
-    // precio_compra es por unidad, así que se multiplica por las unidades compradas.
+    // Se usa costo_total (lo realmente pagado); en lotes antiguos (-1) precio_compra x unidades.
     // Si el producto fue eliminado (agregado por error) y el lote nunca se vendió, no cuenta.
     @Query(
         """
-        SELECT COALESCE(SUM(l.precio_compra * l.unidades_iniciales), 0)
+        SELECT COALESCE(SUM(CASE WHEN l.costo_total >= 0 THEN l.costo_total ELSE l.precio_compra * l.unidades_iniciales END), 0)
         FROM lote l JOIN producto p ON p.id_producto = l.id_producto
         WHERE l.fecha_ingreso >= :desde AND l.fecha_ingreso < :hasta
           AND (p.activo = 1
@@ -130,7 +130,7 @@ interface ReporteDao {
     @Query(
         """
         SELECT strftime('%Y-%m', l.fecha_ingreso / 1000, 'unixepoch', 'localtime') AS mes,
-               SUM(l.precio_compra * l.unidades_iniciales) AS monto
+               SUM(CASE WHEN l.costo_total >= 0 THEN l.costo_total ELSE l.precio_compra * l.unidades_iniciales END) AS monto
         FROM lote l JOIN producto p ON p.id_producto = l.id_producto
         WHERE l.fecha_ingreso >= :desde
           AND (p.activo = 1

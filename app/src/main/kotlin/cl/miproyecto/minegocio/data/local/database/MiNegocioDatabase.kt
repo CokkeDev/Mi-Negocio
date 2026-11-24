@@ -33,7 +33,7 @@ import cl.miproyecto.minegocio.data.local.entity.VentaEntity
     ],
     // Versión de la estructura de la base de datos.
     // Si cambias una tabla (por ejemplo, agregas una columna), hay que subirla a 2, 3...
-    version = 3,
+    version = 4,
     // Guarda un archivo con la forma de las tablas en app/schemas.
     // Sirve para poder actualizar la base de datos sin perder los datos del usuario.
     exportSchema = true,
@@ -47,6 +47,8 @@ import cl.miproyecto.minegocio.data.local.entity.VentaEntity
         AutoMigration(from = 1, to = 2),
         // Versión 3: se agregan las tablas perdida, venta, detalle_venta y gasto.
         AutoMigration(from = 2, to = 3),
+        // Versión 4: lote.costo_total (lo pagado por el lote completo, sin redondear).
+        AutoMigration(from = 3, to = 4),
     ],
 )
 // "abstract" significa que la clase no está completa:

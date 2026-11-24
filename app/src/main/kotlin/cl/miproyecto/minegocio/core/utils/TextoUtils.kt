@@ -15,20 +15,22 @@ import java.text.Normalizer
 //
 // Funciona como una cadena: cada línea toma el resultado de la anterior
 // y le hace un cambio más. Ejemplo con "  Café-Nescafé  ":
-fun normalizarNombre(nombre: String): String =
-    // 1) trim(): quita los espacios del inicio y del final  -> "Café-Nescafé"
-    // 2) lowercase(): pasa todo a minúsculas                -> "café-nescafé"
-    // 3) Normalizer NFD: separa cada tilde de su letra (é -> e + ´)
-    Normalizer.normalize(nombre.trim().lowercase(), Normalizer.Form.NFD)
-        // 4) Borra las tildes que quedaron sueltas.
-        //    "\\p{M}" significa "marcas" (tildes, diéresis...) -> "cafe-nescafe"
-        //    La ñ también pierde su "tilde": "piña" -> "pina".
-        .replace(Regex("\\p{M}"), "")
-        // 5) Todo lo que NO sea letra, número o espacio se cambia por un espacio.
-        //    El "^" dentro de [ ] significa "que NO sea" -> "cafe nescafe"
-        .replace(Regex("[^a-z0-9 ]"), " ")
-        // 6) Si quedaron varios espacios seguidos, los deja en uno solo.
-        //    "\\s+" significa "uno o más espacios"
-        .replace(Regex("\\s+"), " ")
-        // 7) Vuelve a quitar los espacios de los bordes (pudieron aparecer en el paso 5).
-        .trim()
+fun normalizarNombre(nombre: String): String {
+    val limpio =
+        // 1) trim() + lowercase(): sin espacios en los bordes y en minúsculas.
+        // 2) Normalizer NFD: separa cada tilde de su letra (é -> e + ´)
+        Normalizer.normalize(nombre.trim().lowercase(), Normalizer.Form.NFD)
+            // 3) La "ñ" es una letra distinta de la "n" (piña != pina): se vuelve a unir
+            //    antes de borrar las tildes, para que no se pierda.
+            .replace("n\u0303", "ñ")
+            // 4) Borra las tildes sueltas que quedaron (á -> a). "\\p{M}" = "marcas".
+            .replace(Regex("\\p{M}"), "")
+            // 5) Todo lo que NO sea letra (de cualquier alfabeto), número o espacio -> espacio.
+            .replace(Regex("[^\\p{L}\\p{N} ]"), " ")
+            // 6) Varios espacios seguidos -> uno solo, y sin espacios en los bordes.
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    // Si el nombre solo tenía emojis o símbolos (ej: "🍫"), no se puede dejar vacío:
+    // se usa el texto original en minúsculas para poder compararlo igual.
+    return limpio.ifEmpty { nombre.trim().lowercase().replace(Regex("\\s+"), " ") }
+}

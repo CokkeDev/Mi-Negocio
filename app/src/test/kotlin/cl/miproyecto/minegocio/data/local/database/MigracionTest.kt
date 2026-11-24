@@ -17,7 +17,7 @@ import java.io.File
 
 // TEST DE MIGRACIÓN
 // Simula un teléfono con la app VIEJA (base de datos versión 1 o 2) y datos guardados.
-// Después abre esa base de datos con la app ACTUAL (versión 3):
+// Después abre esa base de datos con la app ACTUAL (versión 4):
 // Room aplica las AutoMigrations y revisa que las tablas queden exactamente como en 3.json.
 // Si algo no calza, Room lanza un error y el test falla.
 // Los esquemas viejos se leen de app/schemas/.../1.json y 2.json.
@@ -49,6 +49,26 @@ class MigracionTest {
         // Las tablas nuevas de la versión 3 existen y funcionan.
         db.gastoDao().insertar(GastoEntity(descripcion = "Luz", monto = 1000, categoria = "SERVICIOS", fecha = 1))
         assertEquals(1, db.gastoDao().obtenerTodos().first().size)
+        db.close()
+    }
+
+    @Test
+    fun de_version_3_a_4_agrega_costo_total_sin_perder_lotes() = runTest {
+        crearBaseVieja(version = 3) {
+            execSQL(
+                "INSERT INTO producto (id_producto, sku, nombre, nombre_normalizado, URL_imagen, precio_venta, activo) " +
+                    "VALUES (1, NULL, 'Leche', 'leche', NULL, 1200, 1)",
+            )
+            execSQL(
+                "INSERT INTO lote (id_lote, id_producto, precio_compra, fecha_ingreso, fecha_vencimiento, " +
+                    "unidades_iniciales, unidades_disponibles) VALUES (1, 1, 800, 1000, NULL, 10, 7)",
+            )
+        }
+        val db = abrirConLaAppActual()
+        val lote = db.loteDao().obtenerPorProductoUnaVez(1).single()
+        assertEquals(7, lote.unidadesDisponibles)
+        // Un lote antiguo no tiene costo total: queda en -1 y los reportes usan precio x unidades.
+        assertEquals(-1, lote.costoTotal)
         db.close()
     }
 
