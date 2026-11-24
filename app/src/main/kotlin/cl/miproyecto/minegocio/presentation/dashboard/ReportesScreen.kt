@@ -163,15 +163,13 @@ private fun TarjetaGanancia(periodo: Periodo, resumen: ResumenPeriodo) {
     ) {
         Text(titulo, fontSize = 13.sp, color = colores.onPrimary.copy(alpha = 0.9f))
         Text(formatoPesos(resumen.gananciaNeta), fontSize = 32.sp, fontWeight = FontWeight.Bold, color = colores.onPrimary)
-        // Cómo se llega a la ganancia neta: ventas − costo − gastos − merma.
-        val costo = resumen.ventas - resumen.gananciaVentas
+        // Cómo se llega a la ganancia neta: ventas − compras de lotes − gastos.
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Cifra("Ventas", formatoPesos(resumen.ventas), Modifier.weight(1f))
-            Cifra("Costo", formatoPesos(-costo), Modifier.weight(1f))
+            Cifra("Compras", formatoPesos(-resumen.compras), Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Cifra("Gastos", formatoPesos(-resumen.gastos), Modifier.weight(1f))
-            Cifra("Merma", formatoPesos(-resumen.merma), Modifier.weight(1f))
         }
     }
 }

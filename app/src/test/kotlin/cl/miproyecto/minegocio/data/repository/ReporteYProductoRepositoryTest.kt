@@ -3,6 +3,7 @@ package cl.miproyecto.minegocio.data.repository
 import android.database.sqlite.SQLiteConstraintException
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import cl.miproyecto.minegocio.core.utils.claveMes
+import cl.miproyecto.minegocio.core.utils.inicioDeSemana
 import cl.miproyecto.minegocio.data.DIA
 import cl.miproyecto.minegocio.data.crearBaseEnMemoria
 import cl.miproyecto.minegocio.data.crearLote
@@ -72,7 +73,8 @@ class ReporteYProductoRepositoryTest {
         assertEquals(2_000, r.gananciaVentas)
         assertEquals(1_000, r.gastos)
         assertEquals(1_500, r.merma)
-        assertEquals(2_000 - 1_000 - 1_500, r.gananciaNeta)
+        assertEquals(18_000, r.compras)
+        assertEquals(5_000 - 18_000 - 1_000, r.gananciaNeta)
     }
 
     @Test
@@ -102,6 +104,19 @@ class ReporteYProductoRepositoryTest {
         val r = reportes.resumen(ahora - DIA, ahora + DIA).first()
 
         assertEquals(0, r.compras)
+    }
+
+    @Test
+    fun compras_de_la_semana_suman_todos_los_lotes() = runTest {
+        val a = db.crearProducto("A", 2_000)
+        val b = db.crearProducto("B", 3_000)
+        db.crearLote(a, 1_000, unidades = 10, ingreso = ahora - 1_000)
+        db.crearLote(a, 500, unidades = 4, ingreso = ahora - 2_000)
+        db.crearLote(b, 2_000, unidades = 5)
+
+        val r = reportes.resumen(inicioDeSemana(ahora), ahora + DIA).first()
+
+        assertEquals(10_000 + 2_000 + 10_000, r.compras)
     }
 
     @Test
@@ -155,14 +170,14 @@ class ReporteYProductoRepositoryTest {
     fun ganancia_por_mes_entrega_seis_meses_y_el_actual_al_final() = runTest {
         val p = db.crearProducto("P", 1_000)
         db.crearLote(p, 400, 10)
-        vender(p, 1_000, 2)                                          // +1.200 este mes
+        vender(p, 1_000, 2)                                          // ventas 2.000, lote 4.000
         gastos.insertar(Gasto(descripcion = "G", monto = 200, categoria = CategoriaGasto.OTROS, fecha = ahora))
 
         val meses = reportes.gananciaPorMes(6).first()
 
         assertEquals(6, meses.size)
         assertEquals(claveMes(ahora), claveMes(meses.last().inicioMes))
-        assertEquals(1_000, meses.last().gananciaNeta)
+        assertEquals(2_000 - 4_000 - 200, meses.last().gananciaNeta)
         assertTrue(meses.dropLast(1).all { it.gananciaNeta == 0 })
     }
 
