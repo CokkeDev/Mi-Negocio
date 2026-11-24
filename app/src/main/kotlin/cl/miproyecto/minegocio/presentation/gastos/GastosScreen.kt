@@ -173,7 +173,14 @@ private fun ResumenMes(estado: GastosUiState) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(nombreMes(System.currentTimeMillis()), fontSize = 13.sp, color = colores.onSurfaceVariant)
-                Text(formatoPesos(estado.totalMes), fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                val total = formatoPesos(estado.totalMes)
+                // Con totales muy grandes se achica la letra para que no se parta en varias líneas.
+                Text(
+                    total,
+                    fontSize = if (total.length > 12) 20.sp else 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                )
             }
             estado.porcentajeDeVentas?.let {
                 Text(

@@ -60,13 +60,13 @@ interface ReporteDao {
     )
     fun totalCompras(desde: Long, hasta: Long): Flow<Int>
 
-    @Query("SELECT COALESCE(SUM(monto), 0) FROM gasto WHERE fecha >= :desde AND fecha < :hasta")
+    @Query("SELECT MIN(COALESCE(SUM(monto), 0), 2147483647) FROM gasto WHERE fecha >= :desde AND fecha < :hasta")
     fun totalGastos(desde: Long, hasta: Long): Flow<Int>
 
     // Gastos sumados por categoría (para la barra de colores de la pantalla Gastos).
     @Query(
         """
-        SELECT categoria, SUM(monto) AS monto FROM gasto
+        SELECT categoria, MIN(SUM(monto), 2147483647) AS monto FROM gasto
         WHERE fecha >= :desde AND fecha < :hasta
         GROUP BY categoria ORDER BY monto DESC
         """
@@ -121,7 +121,7 @@ interface ReporteDao {
     @Query(
         """
         SELECT strftime('%Y-%m', fecha / 1000, 'unixepoch', 'localtime') AS mes,
-               SUM(monto) AS monto
+               MIN(SUM(monto), 2147483647) AS monto
         FROM gasto WHERE fecha >= :desde GROUP BY mes
         """
     )

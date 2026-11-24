@@ -6,6 +6,7 @@ package cl.miproyecto.minegocio.domain.usecase
 const val PRECIO_VENTA_MAXIMO = 1_000_000
 const val UNIDADES_LOTE_MAXIMO = 100_000
 const val COSTO_LOTE_MAXIMO = 1_000_000_000
+const val GASTO_MAXIMO = 10_000_000
 const val BOLETA_MAXIMA = 1_000_000_000
 
 // Total de una boleta calculado en Long (no se desborda) para poder compararlo con el tope.
