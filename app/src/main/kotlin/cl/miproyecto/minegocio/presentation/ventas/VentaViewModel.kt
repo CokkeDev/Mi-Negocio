@@ -12,6 +12,8 @@ import cl.miproyecto.minegocio.domain.model.ProductoResumen
 import cl.miproyecto.minegocio.domain.repository.ConfiguracionRepository
 import cl.miproyecto.minegocio.domain.repository.ProductoRepository
 import cl.miproyecto.minegocio.domain.repository.VentaRepository
+import cl.miproyecto.minegocio.domain.usecase.BOLETA_MAXIMA
+import cl.miproyecto.minegocio.domain.usecase.totalSeguro
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +29,8 @@ sealed interface AvisoVenta {
     data class SinStock(val nombre: String) : AvisoVenta
     data class StockMaximo(val nombre: String, val stock: Int) : AvisoVenta
     data class CodigoNoRegistrado(val codigo: String) : AvisoVenta
+    // La boleta llegaría al tope de montos (evita que el total se desborde).
+    data object BoletaMaxima : AvisoVenta
 }
 
 data class VentaUiState(
@@ -109,6 +113,10 @@ class VentaViewModel(
                 if (it.idProducto == producto.idProducto) it.copy(cantidad = it.cantidad + 1, stock = resumen.stock) else it
             }
         }
+        if (totalSeguro(nuevas) > BOLETA_MAXIMA) {
+            _uiState.update { it.copy(aviso = AvisoVenta.BoletaMaxima) }
+            return false
+        }
         contadorAvisos++
         _uiState.update { it.copy(lineas = nuevas, aviso = AvisoVenta.Agregado(producto.nombre, contadorAvisos)) }
         return true
@@ -126,7 +134,9 @@ class VentaViewModel(
                 val cantidad = (linea.cantidad + delta).coerceAtMost(linea.stock)
                 if (cantidad <= 0) null else linea.copy(cantidad = cantidad)
             }
-            estado.copy(lineas = nuevas)
+            // Si con el cambio la boleta pasa el tope de montos, no se aplica.
+            if (totalSeguro(nuevas) > BOLETA_MAXIMA) estado.copy(aviso = AvisoVenta.BoletaMaxima)
+            else estado.copy(lineas = nuevas)
         }
     }
 

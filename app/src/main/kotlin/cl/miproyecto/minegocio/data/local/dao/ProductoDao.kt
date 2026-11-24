@@ -8,12 +8,16 @@ import cl.miproyecto.minegocio.data.local.relacion.ProductoConStock
 import kotlinx.coroutines.flow.Flow
 
 // Parte común de las consultas que traen un producto con los datos de sus lotes.
+// El stock NO cuenta los lotes vencidos (no se pueden vender).
 // Cada "(SELECT ...)" es una subconsulta que calcula un dato por cada producto "p".
 // "const val": un texto fijo que se puede usar dentro de @Query.
 private const val SELECT_CON_STOCK = """
     SELECT p.*,
         COALESCE((SELECT SUM(l.unidades_disponibles) FROM lote l
-                  WHERE l.id_producto = p.id_producto), 0) AS stock,
+                  WHERE l.id_producto = p.id_producto
+                    AND (l.fecha_vencimiento IS NULL
+                         OR l.fecha_vencimiento >=
+                            (strftime('%s', 'now', 'localtime', 'start of day', 'utc') * 1000))), 0) AS stock,
         (SELECT COUNT(*) FROM lote l
          WHERE l.id_producto = p.id_producto AND l.unidades_disponibles > 0) AS lotes_con_stock,
         (SELECT COUNT(*) FROM lote l WHERE l.id_producto = p.id_producto) AS total_lotes,

@@ -124,4 +124,4 @@ internal fun esRespaldoValido(archivo: File): Boolean {
 }
 
 // Debe ser igual a "version" en @Database (MiNegocioDatabase).
-internal const val VERSION_BASE_DE_DATOS = 3
+internal const val VERSION_BASE_DE_DATOS = 4

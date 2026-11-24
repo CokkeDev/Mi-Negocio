@@ -13,6 +13,7 @@ fun LoteEntity.toDomain(): Lote =
         fechaVencimiento = fechaVencimiento,
         unidadesIniciales = unidadesIniciales,
         unidadesDisponibles = unidadesDisponibles,
+        costoTotal = costoTotal,
     )
 
 // De la app -> a la base de datos
@@ -25,4 +26,5 @@ fun Lote.toEntity(): LoteEntity =
         fechaVencimiento = fechaVencimiento,
         unidadesIniciales = unidadesIniciales,
         unidadesDisponibles = unidadesDisponibles,
+        costoTotal = costoTotal,
     )

@@ -271,6 +271,7 @@ private fun AvisoFlotante(aviso: AvisoVenta) {
         is AvisoVenta.Agregado -> Triple("${aviso.nombre} agregado", "+1", true)
         is AvisoVenta.SinStock -> Triple("${aviso.nombre} no tiene stock", "", false)
         is AvisoVenta.StockMaximo -> Triple("Solo hay ${aviso.stock} de ${aviso.nombre}", "", false)
+        is AvisoVenta.BoletaMaxima -> Triple("La boleta llegó al monto máximo", "", false)
         is AvisoVenta.CodigoNoRegistrado -> Triple("", "", false)
     }
     Row(

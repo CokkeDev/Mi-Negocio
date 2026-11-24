@@ -76,4 +76,11 @@ data class LoteEntity(
     // y baja con cada venta o merma.  Ej: compré 12, vendí 3 -> quedan 9.
     @ColumnInfo(name = "unidades_disponibles")
     val unidadesDisponibles: Int,
+
+    // Lo que se pagó por el lote COMPLETO, sin redondear (ej: $10.000 por 3 u.).
+    // precio_compra es por unidad y se redondea (3.333), así que 3.333 x 3 = 9.999.
+    // Los reportes de compras usan este número para que cuadre con lo realmente pagado.
+    // -1 = lote antiguo (de antes de esta columna): ahí se usa precio_compra x unidades.
+    @ColumnInfo(name = "costo_total", defaultValue = "-1")
+    val costoTotal: Int = -1,
 )

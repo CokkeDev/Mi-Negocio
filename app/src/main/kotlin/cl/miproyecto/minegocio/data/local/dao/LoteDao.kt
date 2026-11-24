@@ -6,6 +6,9 @@ import androidx.room.Query
 import cl.miproyecto.minegocio.data.local.entity.LoteEntity
 import kotlinx.coroutines.flow.Flow
 
+// Las 00:00 de hoy en la hora del teléfono, en milisegundos (como se guardan las fechas).
+private const val HOY = "(strftime('%s', 'now', 'localtime', 'start of day', 'utc') * 1000)"
+
 @Dao
 interface LoteDao {
 
@@ -23,22 +26,26 @@ interface LoteDao {
     )
     fun obtenerPorProducto(idProducto: Long): Flow<List<LoteEntity>>
 
-    // 3) El stock de un producto
+    // 3) El stock de un producto (sin contar lo vencido)
     @Query(
         """
         SELECT COALESCE(SUM(unidades_disponibles), 0)
         FROM lote
         WHERE id_producto = :idProducto
+          AND (fecha_vencimiento IS NULL OR fecha_vencimiento >= $HOY)
         """
     )
     fun obtenerStock(idProducto: Long): Flow<Int>
 
     // 4) Igual que la 2), pero una sola vez (sin Flow).
     // Se usa DENTRO de una transacción de venta para repartir las unidades.
+    // Un lote que venció (antes de hoy) NO se vende: sigue en la base para poder
+    // registrarlo como merma, pero no cuenta como stock ni sale en la boleta.
     @Query(
         """
         SELECT * FROM lote
         WHERE id_producto = :idProducto AND unidades_disponibles > 0
+          AND (fecha_vencimiento IS NULL OR fecha_vencimiento >= $HOY)
         ORDER BY fecha_vencimiento IS NULL, fecha_vencimiento, fecha_ingreso
         """
     )
