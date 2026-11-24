@@ -70,6 +70,32 @@ class VentaViewModel(
 
     private var contadorAvisos = 0
 
+    init {
+        // La boleta se mantiene al día con los productos: si cambia el precio o el stock
+        // de un producto mientras se arma la boleta, la línea se actualiza (no se cobra el
+        // precio viejo). Si el producto ya no existe o se quedó sin stock, la línea se quita.
+        viewModelScope.launch {
+            productoRepository.obtenerConStock().collect { lista ->
+                val porId = lista.associateBy { it.producto.idProducto }
+                _uiState.update { estado ->
+                    // Mientras se confirma la venta la boleta no se toca.
+                    if (estado.registrando || estado.lineas.isEmpty()) return@update estado
+                    val nuevas = estado.lineas.mapNotNull { linea ->
+                        val actual = porId[linea.idProducto] ?: return@mapNotNull null
+                        val cantidad = minOf(linea.cantidad, actual.stock)
+                        if (cantidad <= 0) null
+                        else linea.copy(
+                            precioUnitario = actual.producto.precioVenta,
+                            cantidad = cantidad,
+                            stock = actual.stock,
+                        )
+                    }
+                    if (nuevas == estado.lineas) estado else estado.copy(lineas = nuevas)
+                }
+            }
+        }
+    }
+
     // El escáner leyó un código. Devuelve true si se agregó (para sonar / vibrar).
     fun escanearSku(codigo: String, alAgregar: () -> Unit) {
         viewModelScope.launch {
@@ -88,6 +114,8 @@ class VentaViewModel(
     }
 
     private fun agregar(resumen: ProductoResumen): Boolean {
+        // Mientras se confirma la venta la boleta no se puede modificar.
+        if (_uiState.value.registrando) return false
         val producto = resumen.producto
         if (resumen.stock <= 0) {
             _uiState.update { it.copy(aviso = AvisoVenta.SinStock(producto.nombre)) }
@@ -110,7 +138,7 @@ class VentaViewModel(
                 return false
             }
             else -> lineas.map {
-                if (it.idProducto == producto.idProducto) it.copy(cantidad = it.cantidad + 1, stock = resumen.stock) else it
+                if (it.idProducto == producto.idProducto) it.copy(cantidad = it.cantidad + 1, stock = resumen.stock, precioUnitario = producto.precioVenta) else it
             }
         }
         if (totalSeguro(nuevas) > BOLETA_MAXIMA) {
@@ -129,6 +157,7 @@ class VentaViewModel(
 
     private fun cambiarCantidad(idProducto: Long, delta: Int) {
         _uiState.update { estado ->
+            if (estado.registrando) return@update estado
             val nuevas = estado.lineas.mapNotNull { linea ->
                 if (linea.idProducto != idProducto) return@mapNotNull linea
                 val cantidad = (linea.cantidad + delta).coerceAtMost(linea.stock)
@@ -147,8 +176,10 @@ class VentaViewModel(
     fun confirmarVenta() {
         val estado = _uiState.value
         if (estado.lineas.isEmpty() || estado.registrando) return
+        // Se marca "registrando" ANTES de lanzar la corrutina: así un segundo toque o un
+        // cambio en la boleta justo después de confirmar ya no entran.
+        _uiState.update { it.copy(registrando = true) }
         viewModelScope.launch {
-            _uiState.update { it.copy(registrando = true) }
             try {
                 ventaRepository.registrarVenta(estado.lineas)
                 // Éxito: se limpia la boleta.
