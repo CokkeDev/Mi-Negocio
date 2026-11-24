@@ -181,8 +181,10 @@ fun DetalleProductoScreen(
             title = { Text("Eliminar producto") },
             text = {
                 Text(
-                    "¿Seguro que quieres eliminar “${resumen.producto.nombre}”? Dejará de aparecer, " +
-                        "pero sus ventas se conservan en los reportes.",
+                    textoConfirmarEliminar(
+                        nombre = resumen.producto.nombre,
+                        unidadesEnLotes = estado.lotes.sumOf { it.unidadesDisponibles },
+                    ),
                 )
             },
             confirmButton = {

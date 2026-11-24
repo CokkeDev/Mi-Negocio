@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -61,7 +62,9 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.miproyecto.minegocio.core.utils.iniciales
@@ -107,6 +110,17 @@ fun BarraSuperior(
     )
 }
 
+// TAMAÑO DE LETRA CON TOPE
+// Cuando el usuario agranda el texto del teléfono (accesibilidad), las letras crecen en todas
+// partes. En lugares de ancho fijo (barra inferior, botones, filtros) eso las rompía:
+// "Reporte/s", "Recha", "Sin stock" en vertical. Esta función deja que la letra crezca,
+// pero solo hasta "tope" veces el tamaño normal (1,3 = 30 % más grande).
+@Composable
+fun spConTope(base: Float, tope: Float = 1.3f): TextUnit {
+    val escala = LocalDensity.current.fontScale
+    return (base * minOf(escala, tope) / escala).sp
+}
+
 // ── Las 4 pestañas de abajo: Inicio, Vender, Reportes, Gastos ──
 enum class Pestana(val etiqueta: String, val icono: ImageVector) {
     INICIO("Inicio", Iconos.Inicio),
@@ -123,7 +137,7 @@ fun BarraInferior(seleccionada: Pestana, onSeleccionar: (Pestana) -> Unit) {
                 selected = pestana == seleccionada,
                 onClick = { if (pestana != seleccionada) onSeleccionar(pestana) },
                 icon = { Icon(pestana.icono, contentDescription = null) },
-                label = { Text(pestana.etiqueta) },
+                label = { Text(pestana.etiqueta, fontSize = spConTope(12f), maxLines = 1, softWrap = false) },
                 colors = NavigationBarItemDefaults.colors(
                     indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
                 ),
@@ -146,12 +160,20 @@ fun BotonPrincipal(
         enabled = habilitado,
         modifier = modifier.height(52.dp),
         shape = RoundedCornerShape(26.dp),
+        // Menos margen interno (antes 24 dp) para que "Rechazar" quepa con texto grande.
+        contentPadding = PaddingValues(horizontal = 12.dp),
     ) {
         if (icono != null) {
             Icon(icono, contentDescription = null, modifier = Modifier.size(20.dp))
             Box(Modifier.width(8.dp))
         }
-        Text(texto, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        Text(
+            texto,
+            fontSize = spConTope(15f),
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -169,12 +191,19 @@ fun BotonSecundario(
         shape = RoundedCornerShape(26.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = color),
+        contentPadding = PaddingValues(horizontal = 12.dp),
     ) {
         if (icono != null) {
             Icon(icono, contentDescription = null, modifier = Modifier.size(20.dp))
             Box(Modifier.width(8.dp))
         }
-        Text(texto, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        Text(
+            texto,
+            fontSize = spConTope(15f),
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

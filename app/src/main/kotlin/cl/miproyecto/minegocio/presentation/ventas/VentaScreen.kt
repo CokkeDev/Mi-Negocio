@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -383,9 +384,13 @@ private fun FilaBoleta(linea: LineaVenta, onMenos: () -> Unit, onMas: () -> Unit
         }
         Text(
             formatoPesos(linea.subtotal),
-            modifier = Modifier.width(72.dp),
+            // widthIn + sin salto de línea: con texto grande el precio ocupa más espacio en vez
+            // de partirse en dos líneas ("$3.50" / "0").
+            modifier = Modifier.widthIn(min = 72.dp),
             textAlign = TextAlign.End,
             fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            softWrap = false,
         )
     }
 }

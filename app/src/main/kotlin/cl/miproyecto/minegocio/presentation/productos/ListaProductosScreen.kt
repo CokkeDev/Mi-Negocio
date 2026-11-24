@@ -41,6 +41,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import cl.miproyecto.minegocio.core.ui.spConTope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -142,7 +145,12 @@ fun ListaProductosScreen(
             }
             // ── Filtros ──
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // horizontalScroll: con texto grande los 3 filtros no caben y ahora se desplazan
+                // en vez de aplastarse.
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                ) {
                     Filtro("Todos · ${estado.totalProductos}", estado.filtro == FiltroProductos.TODOS) {
                         viewModel.elegirFiltro(FiltroProductos.TODOS)
                     }
@@ -275,7 +283,7 @@ private fun Filtro(texto: String, seleccionado: Boolean, onClick: () -> Unit) {
     FilterChip(
         selected = seleccionado,
         onClick = onClick,
-        label = { Text(texto, fontSize = 13.sp) },
+        label = { Text(texto, fontSize = spConTope(13f), maxLines = 1, softWrap = false) },
         colors = FilterChipDefaults.filterChipColors(
             selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
             selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
