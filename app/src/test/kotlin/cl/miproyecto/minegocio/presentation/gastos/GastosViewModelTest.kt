@@ -26,7 +26,9 @@ class GastosViewModelTest {
 
     private class GastosFalsos : GastoRepository {
         val guardados = mutableListOf<Gasto>()
-        override suspend fun insertar(gasto: Gasto): Long { guardados += gasto; return 1 }
+        // Si "espera" no es null, el guardado queda en curso hasta completarla.
+        var espera: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+        override suspend fun insertar(gasto: Gasto): Long { espera?.await(); guardados += gasto; return 1 }
         override suspend fun eliminar(idGasto: Long) {}
         override fun obtenerTodos(): Flow<List<Gasto>> = flowOf(emptyList())
     }
@@ -68,5 +70,17 @@ class GastosViewModelTest {
         // 2.000.000.000 x 100 desbordaba el Int y daba un porcentaje negativo.
         val estado = GastosUiState(totalMes = 2_000_000_000, ventasMes = 1_000_000_000)
         assertEquals(200, estado.porcentajeDeVentas)
+    }
+
+    @Test
+    fun toques_rapidos_en_guardar_solo_guardan_un_gasto() {
+        val gastos = GastosFalsos().apply { espera = kotlinx.coroutines.CompletableDeferred() }
+        val vm = GastosViewModel(gastos, ReportesFalsos())
+        repeat(4) { vm.agregarGasto("Luz", "777", CategoriaGasto.SERVICIOS, 1L) }
+        gastos.espera!!.complete(Unit)
+        assertEquals(1, gastos.guardados.size)
+        // Terminado el primer guardado, se puede guardar otro gasto.
+        vm.agregarGasto("Agua", "500", CategoriaGasto.SERVICIOS, 1L)
+        assertEquals(2, gastos.guardados.size)
     }
 }

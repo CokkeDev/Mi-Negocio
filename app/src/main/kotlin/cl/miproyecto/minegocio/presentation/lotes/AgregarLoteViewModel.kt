@@ -45,6 +45,10 @@ class AgregarLoteViewModel(
 
     // costoTotalTexto: lo que se pagó por el lote COMPLETO (no por unidad).
     fun guardarLote(costoTotalTexto: String, unidades: Int, fechaVencimiento: Long?, noVence: Boolean) {
+        // Con toques rápidos en "Guardar lote" este método se llamaba 2 veces antes de que el
+        // botón se desactivara y se guardaban lotes repetidos: si ya se está guardando
+        // (o ya se guardó), se ignora.
+        if (_uiState.value is AgregarLoteUiState.Guardando || _uiState.value is AgregarLoteUiState.Guardado) return
         // 1) Validar: costo >= 0, unidades > 0, vencimiento opcional (pero hay que decidir).
         val costoTotal = costoTotalTexto.trim().toIntOrNull()
         if (costoTotal == null || costoTotal < 0) {

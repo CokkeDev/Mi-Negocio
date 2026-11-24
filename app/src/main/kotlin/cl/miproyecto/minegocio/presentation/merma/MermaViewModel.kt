@@ -45,6 +45,8 @@ class MermaViewModel(
     val uiState: StateFlow<MermaUiState> = _uiState.asStateFlow()
 
     fun registrarMerma(lote: Lote?, cantidad: Int, motivo: String, nota: String) {
+        // Evita registrar la misma merma dos veces con toques rápidos.
+        if (_uiState.value is MermaUiState.Guardando || _uiState.value is MermaUiState.Registrada) return
         // Validar: hay lote, cantidad > 0 y no más de las disponibles.
         if (lote == null) {
             _uiState.value = MermaUiState.Error("Elige de qué lote se perdieron las unidades")
