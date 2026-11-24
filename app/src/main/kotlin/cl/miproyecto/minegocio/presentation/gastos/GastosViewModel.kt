@@ -14,6 +14,7 @@ import cl.miproyecto.minegocio.domain.model.CategoriaGasto
 import cl.miproyecto.minegocio.domain.model.Gasto
 import cl.miproyecto.minegocio.domain.repository.GastoRepository
 import cl.miproyecto.minegocio.domain.repository.ReporteRepository
+import cl.miproyecto.minegocio.domain.usecase.GASTO_MAXIMO
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -28,7 +29,9 @@ data class GastosUiState(
     val antes: List<Gasto> = emptyList(),
 ) {
     // Qué parte de las ventas del mes se fue en gastos.
-    val porcentajeDeVentas: Int? get() = if (ventasMes > 0) totalMes * 100 / ventasMes else null
+    // (Se calcula en Long: totalMes * 100 se desbordaba con totales grandes.)
+    val porcentajeDeVentas: Int? get() =
+        if (ventasMes > 0) (totalMes.toLong() * 100 / ventasMes).toInt() else null
 }
 
 class GastosViewModel(
@@ -60,6 +63,7 @@ class GastosViewModel(
         if (descripcion.isBlank()) return "Escribe en qué se gastó"
         val monto = montoTexto.toIntOrNull()
         if (monto == null || monto <= 0) return "Ingresa un monto mayor a 0"
+        if (monto > GASTO_MAXIMO) return "El monto no puede superar los \$10.000.000"
         viewModelScope.launch {
             try {
                 gastoRepository.insertar(Gasto(descripcion = descripcion.trim(), monto = monto, categoria = categoria, fecha = fecha))

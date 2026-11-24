@@ -182,4 +182,19 @@ class BugsEnEmuladorTest {
         db.productoDao().reactivar(p)
         assertTrue(db.productoDao().obtenerConStockPorId(p).first() != null)
     }
+
+    // Gastos: la suma se acota a Int.MAX_VALUE y nunca da vuelta a negativo.
+    @Test
+    fun total_de_gastos_no_se_desborda() = runBlocking {
+        repeat(3) {
+            db.gastoDao().insertar(
+                cl.miproyecto.minegocio.data.local.entity.GastoEntity(
+                    descripcion = "g$it", monto = 999_999_999, categoria = "OTROS", fecha = ahora,
+                ),
+            )
+        }
+        val rep = ReporteRepositoryImpl(db.reporteDao())
+        assertEquals(Int.MAX_VALUE, rep.resumen(ahora - dia, ahora + dia).first().gastos)
+        assertEquals(Int.MAX_VALUE, rep.gastosPorCategoria(ahora - dia, ahora + dia).first().single().second)
+    }
 }

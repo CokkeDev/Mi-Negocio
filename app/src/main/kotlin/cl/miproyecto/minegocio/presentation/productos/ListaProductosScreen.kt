@@ -124,6 +124,7 @@ fun ListaProductosScreen(
                         valor = formatoPesos(estado.hoy.ventasMenosCompras),
                         detalle = "ventas − costo de lotes",
                         destacada = false,
+                        negativo = estado.hoy.ventasMenosCompras < 0,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -184,7 +185,15 @@ fun ListaProductosScreen(
 }
 
 @Composable
-private fun TarjetaDia(titulo: String, valor: String, detalle: String, destacada: Boolean, modifier: Modifier) {
+private fun TarjetaDia(
+    titulo: String,
+    valor: String,
+    detalle: String,
+    destacada: Boolean,
+    modifier: Modifier,
+    // Si el valor es negativo se muestra en rojo (no en verde).
+    negativo: Boolean = false,
+) {
     val colores = MaterialTheme.colorScheme
     Column(
         modifier = modifier
@@ -200,7 +209,11 @@ private fun TarjetaDia(titulo: String, valor: String, detalle: String, destacada
             valor,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = if (destacada) colores.onPrimary else MaterialTheme.extra.exito,
+            color = when {
+                destacada -> colores.onPrimary
+                negativo -> colores.error
+                else -> MaterialTheme.extra.exito
+            },
         )
         Text(detalle, fontSize = 12.sp, color = texto, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
