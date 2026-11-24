@@ -1,6 +1,11 @@
 package cl.miproyecto.minegocio
 
 import android.app.Application
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import cl.miproyecto.minegocio.core.utils.limpiarImagenesHuerfanas
+import cl.miproyecto.minegocio.core.utils.carpetaImagenes
 import cl.miproyecto.minegocio.data.local.database.MiNegocioDatabase
 import cl.miproyecto.minegocio.data.preferencias.ConfiguracionRepositoryImpl
 import cl.miproyecto.minegocio.data.repository.GastoRepositoryImpl
@@ -29,6 +34,20 @@ class MiNegocioApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         instancia = this
+        limpiarFotosSinUso()
+    }
+
+    // Borra las fotos de productos que ya nadie usa. Corre en segundo plano al abrir la app.
+    // Solo se tocan fotos de más de 1 día: una foto recién elegida de un formulario que quedó
+    // abierto (por ejemplo, si el sistema cerró la app) no se borra.
+    private fun limpiarFotosSinUso() {
+        CoroutineScope(Dispatchers.IO).launch {
+            runCatching {
+                val enUso = database.productoDao().rutasImagenes().toSet()
+                val hace1Dia = System.currentTimeMillis() - 24L * 60 * 60 * 1000
+                limpiarImagenesHuerfanas(carpetaImagenes(this@MiNegocioApplication), enUso, hace1Dia)
+            }
+        }
     }
 
     // "by lazy": se crea la primera vez que alguien lo pide, no antes.

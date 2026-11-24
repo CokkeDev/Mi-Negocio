@@ -3,6 +3,9 @@ package cl.miproyecto.minegocio.presentation.productos
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.content.ContextWrapper
+import android.content.Context
+import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,6 +34,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,6 +79,7 @@ import cl.miproyecto.minegocio.core.ui.avisarEscaneo
 import cl.miproyecto.minegocio.core.ui.imagenLocal
 import cl.miproyecto.minegocio.core.ui.soloDigitos
 import cl.miproyecto.minegocio.core.utils.crearUriFotoTemporal
+import cl.miproyecto.minegocio.core.utils.borrarImagenProducto
 import cl.miproyecto.minegocio.core.utils.guardarImagenProducto
 import kotlinx.coroutines.launch
 
@@ -104,10 +110,13 @@ fun AgregarProductoScreen(
     val guardarFoto: (Uri) -> Unit = { uri ->
         scope.launch {
             guardandoFoto = true
+            val anterior = rutaImagen
             rutaImagen = runCatching { guardarImagenProducto(context, uri) }.getOrElse {
                 Mensajero.mostrar("No se pudo cargar la foto")
                 rutaImagen
             }
+            // La foto anterior ya no se usa: se borra para que no ocupe espacio.
+            if (anterior != rutaImagen) borrarImagenProducto(anterior)
             guardandoFoto = false
         }
     }
@@ -129,6 +138,19 @@ fun AgregarProductoScreen(
     }
     val permisoCamara = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         if (ok) abrirCamara() else Mensajero.mostrar("Sin permiso de cámara no se puede sacar la foto")
+    }
+
+    // Si se sale del formulario SIN guardar el producto (Cancelar, atrás), la foto elegida
+    // se borra. Al girar el teléfono la pantalla se vuelve a crear, pero no se sale: ahí no.
+    val estadoActual by rememberUpdatedState(uiState)
+    val rutaActual by rememberUpdatedState(rutaImagen)
+    DisposableEffect(Unit) {
+        onDispose {
+            val cambioDeConfiguracion = context.buscarActividad()?.isChangingConfigurations == true
+            if (!cambioDeConfiguracion && estadoActual !is AgregarProductoUiState.ProductoAgregado) {
+                borrarImagenProducto(rutaActual)
+            }
+        }
     }
 
     // Reacciona cuando el ViewModel termina de guardar.
@@ -371,4 +393,14 @@ private fun SelectorFoto(ruta: String?, cargando: Boolean, onClick: () -> Unit) 
             }
         }
     }
+}
+
+// Busca la Activity dentro del Context (puede venir envuelto en otros).
+private fun Context.buscarActividad(): Activity? {
+    var actual: Context? = this
+    while (actual is ContextWrapper) {
+        if (actual is Activity) return actual
+        actual = actual.baseContext
+    }
+    return null
 }
